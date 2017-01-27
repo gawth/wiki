@@ -5,18 +5,21 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
+
+	"github.com/golang-commonmark/markdown"
 )
 
 const wikiDir = "wiki/"
 
 type Page struct {
 	Title string
-	Body  []byte
+	Body  template.HTML
 }
 
 func checkErr(err error) {
@@ -27,20 +30,29 @@ func checkErr(err error) {
 
 func (p *Page) save() error {
 	filename := wikiDir + p.Title
-	return ioutil.WriteFile(filename, p.Body, 0600)
+	return ioutil.WriteFile(filename, []byte(p.Body), 0600)
 }
 
+func convertMarkdown(page *Page, err error) (*Page, error) {
+	if err != nil {
+		return nil, err
+	}
+	md := markdown.New(markdown.HTML(true))
+	page.Body = template.HTML(md.RenderToString([]byte(page.Body)))
+	return page, nil
+
+}
 func loadPage(title string) (*Page, error) {
 	filename := wikiDir + title
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body}, nil
+	return &Page{Title: title, Body: template.HTML(body)}, nil
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := loadPage(title)
+	p, err := convertMarkdown(loadPage(title))
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
@@ -53,6 +65,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
+	fmt.Println(p)
 	renderTemplate(w, "edit", p)
 }
 
@@ -69,7 +82,7 @@ func homeHandler(dir string, filesFunc getFiles) func(http.ResponseWriter, *http
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
+	p := &Page{Title: title, Body: template.HTML(body)}
 	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
