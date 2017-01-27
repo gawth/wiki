@@ -1,5 +1,10 @@
 <html>
     <h1>
         Homepage
+        {{range .}}
+        <p>
+            <a href="view/{{.}}">{{.}}</a>
+        </p>
+        {{end}}
     </h1>
 </html>

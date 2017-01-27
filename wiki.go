@@ -19,13 +19,19 @@ type Page struct {
 	Body  []byte
 }
 
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (p *Page) save() error {
-	filename := wikiDir + p.Title + ".txt"
+	filename := wikiDir + p.Title
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
-	filename := wikiDir + title + ".txt"
+	filename := wikiDir + title
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -50,8 +56,15 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	renderTemplate(w, "edit", p)
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "home", nil)
+type getFiles func(string) []string
+
+// Change this to take a func rather than a list so that it can refresh the files when required
+// ...using a closure...I think :-)
+func homeHandler(dir string, filesFunc getFiles) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		renderTemplate(w, "home", filesFunc(dir))
+	}
+
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -67,7 +80,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 var templates = template.Must(template.ParseFiles("views/edit.html", "views/view.html", "views/home.html"))
 
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -87,10 +100,23 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+func getWikiList(path string) []string {
+	files, err := ioutil.ReadDir(path)
+	checkErr(err)
+
+	var names []string
+	for _, f := range files {
+		names = append(names, f.Name())
+	}
+
+	return names
+
+}
+
 func main() {
 
 	os.Mkdir(wikiDir, 0755)
-	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/", homeHandler(wikiDir, getWikiList))
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
