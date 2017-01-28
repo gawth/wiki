@@ -1,6 +1,10 @@
 <html>
     <h1>
         Homepage
+        <form action="./edit/" method="GET">
+            <div><input type="text" name="wword" ></div>
+            <div><input type="submit" value="Save"></div>
+        </form>
         {{range .}}
         <p>
             <a href="view/{{.}}">{{.}}</a>

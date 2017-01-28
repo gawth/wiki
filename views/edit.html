@@ -3,10 +3,97 @@
     </head>
     <body>
         <h1>Editing {{.Title}}</h1>
+        <a href="/">Home</a>
 
         <form action="/save/{{.Title}}" method="POST">
             <div><textarea name="body" rows="20" cols="80">{{.Body}}</textarea></div>
             <div><input type="submit" value="Save"></div>
         </form>
+
+<table class="markdown-reference">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>                        
+                        <td class="preformatted">*Italic*</td>
+                    </tr>
+                    <tr>                        
+                        <td class="preformatted">**Bold**</td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            # Heading 1
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            ## Heading 2
+                        </td>
+                    </tr>
+                    <tr>                        
+                        <td class="preformatted">
+                            [Link](http://a.com)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            ![Image](http://url/a.png)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            &gt; Blockquote
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            A paragraph.<br/>
+                            <br/>
+                            A paragraph after 1 blank line.</td>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            <p>
+                                * List<br/>
+                                * List<br/>
+                                * List
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            <p>
+                                1. One<br/>
+                                2. Two<br/>
+                                3. Three
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            Horizontal Rule<br/>
+                            ---
+                        </td>
+                    </tr>
+                    <tr>                        
+                        <td class="preformatted">
+                            `Inline code` with backticks
+                            </td>
+                    </tr>
+                    <tr>
+                        <td class="preformatted">
+                            ```<br/>
+                            # code block<br/>
+                            print '3 backticks or'<br/> 
+                            print 'indent 4 spaces'<br/>                            
+                            ```
+                        </td>
+                    </tr>                    
+                </tbody>
+            </table>
     </body>
 </html>

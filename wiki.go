@@ -5,12 +5,12 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 
 	"github.com/golang-commonmark/markdown"
 )
@@ -65,7 +65,6 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	fmt.Println(p)
 	renderTemplate(w, "edit", p)
 }
 
@@ -104,18 +103,30 @@ var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := validPath.FindStringSubmatch(r.URL.Path)
-		if m == nil {
-			http.NotFound(w, r)
-			return
+		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
+		if len(wword) == 0 {
+			m := validPath.FindStringSubmatch(r.URL.Path)
+			if m == nil {
+				http.NotFound(w, r)
+				return
+			}
+			wword = m[2]
 		}
-		fn(w, r, m[2])
+		fn(w, r, wword)
 	}
 }
+
+type byModTime []os.FileInfo
+
+func (m byModTime) Len() int           { return len(m) }
+func (m byModTime) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
+func (m byModTime) Less(i, j int) bool { return m[i].ModTime().Before(m[j].ModTime()) }
 
 func getWikiList(path string) []string {
 	files, err := ioutil.ReadDir(path)
 	checkErr(err)
+
+	sort.Sort(sort.Reverse(byModTime(files)))
 
 	var names []string
 	for _, f := range files {
