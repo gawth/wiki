@@ -2,16 +2,25 @@
 
 <body>
 
-    <h1> Homepage </h1>
-    <form action="./edit/" method="GET">
-        <div><input type="text" name="wword"></div>
-        <div><input type="submit" value="Save"></div>
-    </form>
-    {{range .}}
-    <p>
-        <a href="view/{{.}}">{{.}}</a>
-    </p>
-    {{end}}
+    <div class="content">
+        <h1> Homepage </h1>
+        <form action="./edit/" method="GET">
+            <div><input type="text" name="wword"></div>
+            <div><input type="submit" value="Save"></div>
+        </form>
+    </div>
+    <div id="menu">
+        <div class="pure-menu">
+            <a class="pure-menu-heading" href="#">Wikis</a>
+            <ul class="pure-menu-list">
+                {{range .}}
+                <p>
+                    <li class="pure-menu-item"><a href="view/{{.}}">{{.}}</a></li>
+                </p>
+                {{end}}
+            </ul>
+        </div>
+    </div>
 </body>
 
 </html>

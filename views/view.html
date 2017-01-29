@@ -1,12 +1,15 @@
 {{template "header" .Title}}
 
 <body>
-    <h1>{{.Title}}</h1>
-    <a href="/">Home</a>
+    <div class="content">
 
-    <div>{{.Body}}</div>
+        <h1>{{.Title}}</h1>
+        <a href="/">Home</a>
 
-    <p>[<a href="/edit/{{.Title}}">edit</a>]</p>
+        <div>{{.Body}}</div>
+
+        <p>[<a href="/edit/{{.Title}}">edit</a>]</p>
+    </div>
 </body>
 
 </html>
