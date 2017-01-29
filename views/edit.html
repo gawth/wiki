@@ -4,11 +4,12 @@
     {{template "leftnav" .Nav}}
     <div class="content">
         <h1>Editing {{.Title}}</h1>
-        <a href="/">Home</a>
 
-        <form action="/save/{{.Title}}" method="POST">
-            <div><textarea name="body" rows="20" cols="80">{{.Body}}</textarea></div>
-            <div><input type="submit" value="Save"></div>
+        <form class="pure-form pure-form-stacked" action="/save/{{.Title}}" method="POST">
+            <fieldset>
+                <textarea name="body" rows="20" cols="80">{{.Body}}</textarea>
+                <button type="submit" class="pure-button pure-button-primary">Save</button>
+            </fieldset>
         </form>
 
         <table class="markdown-reference">

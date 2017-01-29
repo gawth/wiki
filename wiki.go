@@ -43,31 +43,27 @@ func convertMarkdown(page *Page, err error) (*Page, error) {
 	return page, nil
 
 }
-func loadPage(title string) (*Page, error) {
-	filename := wikiDir + title
+func loadPage(p *Page) (*Page, error) {
+	filename := wikiDir + p.Title
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return p, err
 	}
-	return &Page{Title: title, Body: template.HTML(body)}, nil
+	p.Body = template.HTML(body)
+	return p, nil
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request, title string, fn navFunc) {
-	p, err := convertMarkdown(loadPage(title))
+func viewHandler(w http.ResponseWriter, r *http.Request, p *Page) {
+	p, err := convertMarkdown(loadPage(p))
 	if err != nil {
-		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		http.Redirect(w, r, "/edit/"+p.Title, http.StatusFound)
 		return
 	}
-	p.Nav = fn()
 	renderTemplate(w, "view", p)
 }
 
-func editHandler(w http.ResponseWriter, r *http.Request, title string, fn navFunc) {
-	p, err := loadPage(title)
-	if err != nil {
-		p = &Page{Title: title}
-	}
-	p.Nav = fn()
+func editHandler(w http.ResponseWriter, r *http.Request, p *Page) {
+	p, _ = loadPage(p)
 	renderTemplate(w, "edit", p)
 }
 
@@ -80,15 +76,15 @@ func homeHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, title string, fn navFunc) {
+func saveHandler(w http.ResponseWriter, r *http.Request, p *Page) {
 	body := r.FormValue("body")
-	p := &Page{Title: title, Body: template.HTML(body)}
+	p.Body = template.HTML(body)
 	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+	http.Redirect(w, r, "/view/"+p.Title, http.StatusFound)
 }
 
 var templates = template.Must(template.ParseFiles(
@@ -107,7 +103,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string, navFunc), navfn navFunc) http.HandlerFunc {
+func makeHandler(fn func(http.ResponseWriter, *http.Request, *Page), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
 		if len(wword) == 0 {
@@ -118,7 +114,8 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string, navFunc), n
 			}
 			wword = m[2]
 		}
-		fn(w, r, wword, navfn)
+		p := &Page{Title: wword, Nav: navfn()}
+		fn(w, r, p)
 	}
 }
 
