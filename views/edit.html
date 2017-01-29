@@ -5,88 +5,66 @@
     <div class="content">
         <h1>Editing {{.Title}}</h1>
 
-        <form class="pure-form pure-form-stacked" action="/save/{{.Title}}" method="POST">
-            <fieldset>
-                <textarea name="body" rows="20" cols="80">{{.Body}}</textarea>
-                <button type="submit" class="pure-button pure-button-primary">Save</button>
-            </fieldset>
-        </form>
+        <div class="pure-g">
 
-        <table class="markdown-reference">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="preformatted">*Italic*</td>
-                </tr>
-                <tr>
-                    <td class="preformatted">**Bold**</td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        # Heading 1
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        ## Heading 2
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        [Link](http://a.com)
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        ![Image](http://url/a.png)
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        &gt; Blockquote
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        A paragraph.<br/>
-                        <br/> A paragraph after 1 blank line.</td>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        <p>
-                            * List<br/> * List<br/> * List
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        <p>
-                            1. One<br/> 2. Two<br/> 3. Three
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        Horizontal Rule<br/> ---
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        `Inline code` with backticks
-                    </td>
-                </tr>
-                <tr>
-                    <td class="preformatted">
-                        ```<br/> # code block<br/> print '3 backticks or'<br/> print 'indent 4 spaces'<br/> ```
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+            <div class="pure-u-15-24">
+                <div class="l-box">
+                    <form class="pure-form pure-form-stacked" action="/save/{{.Title}}" method="POST">
+                        <fieldset>
+                            <textarea class="pure-input-1" rows=20 name="body">{{.Body}}</textarea>
+                            <button type="submit" class="pure-button pure-button-primary">Save</button>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+
+            <div class="pure-u-9-24">
+                <div class="l-box">
+                    <table class="pure-table pure-table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Markdown</th>
+                                <th>Markdown</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>*Italic*</td>
+                                <td>
+                                    <p> * List<br/> * List<br/> * List </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>**Bold**</td>
+                                <td>
+                                    <p> 1. One<br/> 2. Two<br/> 3. Three </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td># Heading 1 </td>
+                                <td> Horizontal Rule<br/> --- </td>
+                            </tr>
+                            <tr>
+                                <td> ## Heading 2 </td>
+                                <td> `Inline code` with backticks </td>
+                            </tr>
+                            <tr>
+                                <td> [Link](http://a.com) </td>
+                                <td> ```<br/> # code block<br/> print '3 backticks or'<br/> print 'indent 4 spaces'<br/> ``` </td>
+                            </tr>
+                            <tr>
+                                <td> ![Image](http://url/a.png) </td>
+                                <td> &gt; Blockquote </td>
+                            </tr>
+                            <tr>
+                                <td> A paragraph.<br/> <br/> A paragraph after 1 blank line.</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
