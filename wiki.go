@@ -90,7 +90,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
-var templates = template.Must(template.ParseFiles("views/edit.html", "views/view.html", "views/home.html"))
+var templates = template.Must(template.ParseFiles("views/edit.html", "views/view.html", "views/home.html", "views/index.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)

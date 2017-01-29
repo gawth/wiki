@@ -1,14 +1,17 @@
-<html>
-    <h1>
-        Homepage
-        <form action="./edit/" method="GET">
-            <div><input type="text" name="wword" ></div>
-            <div><input type="submit" value="Save"></div>
-        </form>
-        {{range .}}
-        <p>
-            <a href="view/{{.}}">{{.}}</a>
-        </p>
-        {{end}}
-    </h1>
+{{template "header" "Wiki"}}
+
+<body>
+
+    <h1> Homepage </h1>
+    <form action="./edit/" method="GET">
+        <div><input type="text" name="wword"></div>
+        <div><input type="submit" value="Save"></div>
+    </form>
+    {{range .}}
+    <p>
+        <a href="view/{{.}}">{{.}}</a>
+    </p>
+    {{end}}
+</body>
+
 </html>
