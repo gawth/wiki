@@ -36,7 +36,7 @@ func (p *Page) save() error {
 
 func convertMarkdown(page *Page, err error) (*Page, error) {
 	if err != nil {
-		return nil, err
+		return page, err
 	}
 	md := markdown.New(markdown.HTML(true))
 	page.Body = template.HTML(md.RenderToString([]byte(page.Body)))
@@ -59,6 +59,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, p *Page) {
 		http.Redirect(w, r, "/edit/"+p.Title, http.StatusFound)
 		return
 	}
+	p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
 	renderTemplate(w, "view", p)
 }
 
@@ -101,7 +102,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9 ]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *Page), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +142,13 @@ func getWikiList(path string) []string {
 
 	return names
 
+}
+
+func parseWikiWords(target []byte) []byte {
+	var wikiWord = regexp.MustCompile(`\{([^\}]+)\}`)
+
+	return wikiWord.ReplaceAll(target, []byte("<a href=\"/view/$1\">$1</a>"))
+	// return wikiWord.ReplaceAll(target, []byte("fred $1"))
 }
 
 func main() {
