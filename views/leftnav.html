@@ -1,0 +1,14 @@
+{{define "leftnav"}}
+<div id="menu">
+    <div class="pure-menu">
+        <a class="pure-menu-heading" href="/">Wikis</a>
+        <ul class="pure-menu-list">
+            {{range .}}
+            <p>
+                <li class="pure-menu-item"><a href="/view/{{.}}">{{.}}</a></li>
+            </p>
+            {{end}}
+        </ul>
+    </div>
+</div>
+{{end}}
