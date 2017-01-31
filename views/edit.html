@@ -1,6 +1,17 @@
 {{template "header" .Title}}
 
 <body>
+    <script>
+        window.onload = function() {
+            document.getElementById("wikiedit").onkeydown = function(e) {
+                if (e.keyCode == 13 && e.ctrlKey) { // keyCode 13 is Enter
+                    document.getElementById("wikisubmit").click(); // submit the form by hitting ctrl + enter
+                    // alert(e.keyCode); // to know other keyCodes of each keys
+                    return false; // preventing default action
+                }
+            }
+        }
+    </script>
     {{template "leftnav" .Nav}}
     <div class="content">
         <h1>Editing {{.Title}}</h1>
@@ -9,10 +20,10 @@
 
             <div class="pure-u-15-24">
                 <div class="l-box">
-                    <form class="pure-form pure-form-stacked" action="/save/{{.Title}}" method="POST">
+                    <form id="wikiedit" class="pure-form pure-form-stacked" action="/save/{{.Title}}" method="POST">
                         <fieldset>
                             <textarea class="pure-input-1" rows=20 name="body">{{.Body}}</textarea>
-                            <button type="submit" class="pure-button pure-button-primary">Save</button>
+                            <button id="wikisubmit" type="submit" class="pure-button pure-button-primary">Save</button>
                         </fieldset>
                     </form>
                 </div>
