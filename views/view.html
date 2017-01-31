@@ -5,11 +5,17 @@
 
     <div class="content">
 
-        <h1>{{.Title}}</h1>
+        <section>
+            <header>
+                <h1>{{.Title}}</h1>
+            </header>
 
-        <div>{{.Body}}</div>
+            <p>
+                <div class="wikiBody">{{.Body}}</div>
+            </p>
 
-        <p>[<a href="/edit/{{.Title}}">edit</a>]</p>
+            <p>[<a href="/edit/{{.Title}}">edit</a>]</p>
+        </section>
     </div>
 </body>
 
