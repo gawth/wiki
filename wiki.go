@@ -68,6 +68,10 @@ func editHandler(w http.ResponseWriter, r *http.Request, p *Page) {
 	renderTemplate(w, "edit", p)
 }
 
+func searchHandler(w http.ResponseWriter, r *http.Request, p *Page) {
+	renderTemplate(w, "search", p)
+}
+
 type navFunc func() []string
 
 func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Request) {
@@ -103,7 +107,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9 ]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view|search)/([a-zA-Z0-9 ]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *Page), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +160,8 @@ func main() {
 
 	os.Mkdir(wikiDir, 0755)
 	http.HandleFunc("/", homeHandler("home", getNav))
-	http.HandleFunc("/search/", homeHandler("search", getNav))
+	//http.HandleFunc("/search/", homeHandler("search", getNav))
+	http.HandleFunc("/search/", makeHandler(searchHandler, getNav))
 	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))
 	http.HandleFunc("/edit/", makeHandler(editHandler, getNav))
 	http.HandleFunc("/save/", makeHandler(saveHandler, getNav))
