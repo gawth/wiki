@@ -70,9 +70,9 @@ func editHandler(w http.ResponseWriter, r *http.Request, p *Page) {
 
 type navFunc func() []string
 
-func homeHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
+func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		renderTemplate(w, "home", fn())
+		renderTemplate(w, page, fn())
 	}
 
 }
@@ -92,6 +92,7 @@ var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
 	"views/home.html",
+	"views/search.html",
 	"views/index.html",
 	"views/leftnav.html"))
 
@@ -154,7 +155,8 @@ func parseWikiWords(target []byte) []byte {
 func main() {
 
 	os.Mkdir(wikiDir, 0755)
-	http.HandleFunc("/", homeHandler(getNav))
+	http.HandleFunc("/", homeHandler("home", getNav))
+	http.HandleFunc("/search/", homeHandler("search", getNav))
 	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))
 	http.HandleFunc("/edit/", makeHandler(editHandler, getNav))
 	http.HandleFunc("/save/", makeHandler(saveHandler, getNav))
