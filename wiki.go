@@ -17,10 +17,17 @@ import (
 
 const wikiDir = "wiki/"
 
-type Page struct {
+type basePage struct {
 	Title string
-	Body  template.HTML
 	Nav   []string
+}
+type wikiPage struct {
+	Body template.HTML
+	basePage
+}
+type searchPage struct {
+	basePage
+	Results []string
 }
 
 func checkErr(err error) {
@@ -29,12 +36,12 @@ func checkErr(err error) {
 	}
 }
 
-func (p *Page) save() error {
+func (p *wikiPage) save() error {
 	filename := wikiDir + p.Title
 	return ioutil.WriteFile(filename, []byte(p.Body), 0600)
 }
 
-func convertMarkdown(page *Page, err error) (*Page, error) {
+func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	if err != nil {
 		return page, err
 	}
@@ -43,7 +50,7 @@ func convertMarkdown(page *Page, err error) (*Page, error) {
 	return page, nil
 
 }
-func loadPage(p *Page) (*Page, error) {
+func loadPage(p *wikiPage) (*wikiPage, error) {
 	filename := wikiDir + p.Title
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -53,7 +60,7 @@ func loadPage(p *Page) (*Page, error) {
 	return p, nil
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request, p *Page) {
+func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	p, err := convertMarkdown(loadPage(p))
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+p.Title, http.StatusFound)
@@ -63,13 +70,24 @@ func viewHandler(w http.ResponseWriter, r *http.Request, p *Page) {
 	renderTemplate(w, "view", p)
 }
 
-func editHandler(w http.ResponseWriter, r *http.Request, p *Page) {
+func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	p, _ = loadPage(p)
 	renderTemplate(w, "edit", p)
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request, p *Page) {
-	renderTemplate(w, "search", p)
+func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		term := r.URL.Query().Get("term") // Get the search term
+		if len(term) == 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		results := []string{"fred", "jim"}
+		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn()}}
+
+		renderTemplate(w, "search", p)
+	}
 }
 
 type navFunc func() []string
@@ -81,7 +99,7 @@ func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Reques
 
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, p *Page) {
+func saveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	body := r.FormValue("body")
 	p.Body = template.HTML(body)
 	err := p.save()
@@ -109,7 +127,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 
 var validPath = regexp.MustCompile("^/(edit|save|view|search)/([a-zA-Z0-9 ]*)$")
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, *Page), navfn navFunc) http.HandlerFunc {
+func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
 		if len(wword) == 0 {
@@ -120,7 +138,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *Page), navfn navFu
 			}
 			wword = m[2]
 		}
-		p := &Page{Title: wword, Nav: navfn()}
+		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn()}}
 		fn(w, r, p)
 	}
 }
@@ -153,15 +171,13 @@ func parseWikiWords(target []byte) []byte {
 	var wikiWord = regexp.MustCompile(`\{([^\}]+)\}`)
 
 	return wikiWord.ReplaceAll(target, []byte("<a href=\"/view/$1\">$1</a>"))
-	// return wikiWord.ReplaceAll(target, []byte("fred $1"))
 }
 
 func main() {
 
 	os.Mkdir(wikiDir, 0755)
 	http.HandleFunc("/", homeHandler("home", getNav))
-	//http.HandleFunc("/search/", homeHandler("search", getNav))
-	http.HandleFunc("/search/", makeHandler(searchHandler, getNav))
+	http.HandleFunc("/search/", searchHandler(getNav))
 	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))
 	http.HandleFunc("/edit/", makeHandler(editHandler, getNav))
 	http.HandleFunc("/save/", makeHandler(saveHandler, getNav))
