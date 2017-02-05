@@ -22,7 +22,9 @@ type basePage struct {
 	Nav   []string
 }
 type wikiPage struct {
-	Body template.HTML
+	Body     template.HTML
+	Created  string
+	Modified string
 	basePage
 }
 type searchPage struct {
@@ -52,11 +54,22 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 }
 func loadPage(p *wikiPage) (*wikiPage, error) {
 	filename := wikiDir + p.Title
-	body, err := ioutil.ReadFile(filename)
+
+	file, err := os.Open(filename)
 	if err != nil {
 		return p, err
 	}
+	defer file.Close()
+
+	body, err := ioutil.ReadAll(file)
 	p.Body = template.HTML(body)
+
+	info, err := file.Stat()
+	if err != nil {
+		return p, err
+	}
+
+	p.Modified = info.ModTime().String()
 	return p, nil
 }
 
