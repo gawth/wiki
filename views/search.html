@@ -11,7 +11,8 @@
             </header>
             <div class="search-results">
                 {{range .Results}}
-                <li class="search-result"><a href="/view/{{.}}">{{.}}</a></li>
+                <a href="/view/{{.WikiName}}">{{.WikiName}}</a>
+                <li> Line {{.LineNum}} - {{.Text}} </li>
                 {{end}}
             </div>
 

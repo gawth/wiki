@@ -17,15 +17,15 @@ var ParseData = []struct {
 
 func TestParseQueryResults(t *testing.T) {
 	for _, td := range ParseData {
-		res := ParseQueryResults(td.source)
-		if res.WikiName != td.res.WikiName {
-			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract wiki name %v: %v", res.WikiName, td.res.WikiName))
+		res := ParseQueryResults([]string{td.source})
+		if res[0].WikiName != td.res.WikiName {
+			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract wiki name %v: %v", res[0].WikiName, td.res.WikiName))
 		}
-		if res.LineNum != td.res.LineNum {
-			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract line num %v: %v", res.LineNum, td.res.LineNum))
+		if res[0].LineNum != td.res.LineNum {
+			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract line num %v: %v", res[0].LineNum, td.res.LineNum))
 		}
-		if res.Text != td.res.Text {
-			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract text %v: %v", res.Text, td.res.Text))
+		if res[0].Text != td.res.Text {
+			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract text %v: %v", res[0].Text, td.res.Text))
 		}
 
 	}

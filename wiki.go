@@ -27,7 +27,7 @@ type wikiPage struct {
 }
 type searchPage struct {
 	basePage
-	Results []string
+	Results []QueryResults
 }
 
 func checkErr(err error) {
@@ -83,7 +83,7 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		results := SearchWikis(wikiDir, term)
+		results := ParseQueryResults(SearchWikis(wikiDir, term))
 		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn()}}
 
 		renderTemplate(w, "search", p)

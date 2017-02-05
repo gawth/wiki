@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-func readFile(wg *sync.WaitGroup, path string, query string, results chan string) {
+func readFile(wg *sync.WaitGroup, name string, path string, query string, results chan string) {
 	defer wg.Done()
 
 	file, err := os.Open(path)
@@ -21,7 +21,7 @@ func readFile(wg *sync.WaitGroup, path string, query string, results chan string
 	scanner := bufio.NewScanner(file)
 	for i := 1; scanner.Scan(); i++ {
 		if strings.Contains(scanner.Text(), query) {
-			match := fmt.Sprintf("%s\t%d\t%s\n", path, i, scanner.Text())
+			match := fmt.Sprintf("%s\t%d\t%s\n", name, i, scanner.Text())
 			results <- match
 		}
 	}
@@ -35,7 +35,7 @@ func SearchWikis(root string, query string) []string {
 	filepath.Walk(root, func(path string, file os.FileInfo, err error) error {
 		if !file.IsDir() {
 			wg.Add(1)
-			go readFile(&wg, path, query, results)
+			go readFile(&wg, file.Name(), path, query, results)
 		}
 		return nil
 	})
@@ -59,15 +59,20 @@ type QueryResults struct {
 }
 
 // ParseQueryResults converts a result string to a query result
-func ParseQueryResults(source string) QueryResults {
-	sub := strings.Split(source, "\t")
-	if len(sub) < 2 {
-		return QueryResults{"ERROR", "", "Invalid query result"}
-	}
-	res := QueryResults{
-		WikiName: sub[0],
-		LineNum:  sub[1],
-		Text:     strings.Join(sub[2:], "\t"),
+func ParseQueryResults(source []string) []QueryResults {
+	res := []QueryResults{}
+	for _, r := range source {
+		sub := strings.Split(r, "\t")
+		if len(sub) < 2 {
+			res = append(res, QueryResults{"ERROR", "", "Invalid query result"})
+			continue
+		}
+		res = append(res, QueryResults{
+			WikiName: sub[0],
+			LineNum:  sub[1],
+			Text:     strings.Join(sub[2:], "\t"),
+		})
+
 	}
 	return res
 }
