@@ -4,9 +4,20 @@
 
     <div class="content">
         <h1> Homepage </h1>
-        <form action="./edit/" method="GET">
-            <div><input type="text" name="wword"></div>
-            <div><input type="submit" value="Save"></div>
+        <form class="pure-form" action="./edit/" method="GET">
+            <fieldset>
+                <legend>Create a new Wiki page</legend>
+                <input type="text" name="wword">
+                <button type="submit" class="pure-button pure-button-primary">Save</button>
+            </fieldset>
+        </form>
+        </br>
+        <form class="pure-form" action="./search/" method="GET">
+            <fieldset>
+                <legend>Search Wikis</legend>
+                <input type="text" name="term">
+                <button type="submit" class="pure-button pure-button-primary">Search</button>
+            </fieldset>
         </form>
     </div>
     {{template "leftnav" .}}

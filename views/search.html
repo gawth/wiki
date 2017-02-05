@@ -10,10 +10,10 @@
                 <h1>Search</h1>
             </header>
             <div class="search-results">
-                {{range .Results}}
+                {{if .Results}} {{range .Results}}
                 <a href="/view/{{.WikiName}}">{{.WikiName}}</a>
                 <li> Line {{.LineNum}} - {{.Text}} </li>
-                {{end}}
+                {{end}} {{else}} NO RESULTS {{end}}
             </div>
 
         </section>
