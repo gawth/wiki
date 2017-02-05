@@ -83,7 +83,7 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		results := []string{"fred", "jim"}
+		results := SearchWikis(wikiDir, term)
 		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn()}}
 
 		renderTemplate(w, "search", p)
