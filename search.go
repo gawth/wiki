@@ -21,7 +21,7 @@ func readFile(wg *sync.WaitGroup, path string, query string, results chan string
 	scanner := bufio.NewScanner(file)
 	for i := 1; scanner.Scan(); i++ {
 		if strings.Contains(scanner.Text(), query) {
-			match := fmt.Sprintf("%s:%d: %s\n", path, i, scanner.Text())
+			match := fmt.Sprintf("%s\t%d\t%s\n", path, i, scanner.Text())
 			results <- match
 		}
 	}
@@ -49,4 +49,25 @@ func SearchWikis(root string, query string) []string {
 		hits = append(hits, res)
 	}
 	return hits
+}
+
+// QueryResults is used to hold search results after a wiki search
+type QueryResults struct {
+	WikiName string
+	LineNum  string
+	Text     string
+}
+
+// ParseQueryResults converts a result string to a query result
+func ParseQueryResults(source string) QueryResults {
+	sub := strings.Split(source, "\t")
+	if len(sub) < 2 {
+		return QueryResults{"ERROR", "", "Invalid query result"}
+	}
+	res := QueryResults{
+		WikiName: sub[0],
+		LineNum:  sub[1],
+		Text:     strings.Join(sub[2:], "\t"),
+	}
+	return res
 }
