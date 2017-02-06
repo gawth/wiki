@@ -12,10 +12,12 @@ import (
 	"regexp"
 	"sort"
 
+	"log"
+
 	"github.com/golang-commonmark/markdown"
 )
 
-const wikiDir = "wiki/"
+var wikiDir string
 
 type basePage struct {
 	Title string
@@ -188,7 +190,14 @@ func parseWikiWords(target []byte) []byte {
 
 func main() {
 
-	os.Mkdir(wikiDir, 0755)
+	config, err := LoadConfig("config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	wikiDir = config.WikiDir
+
+	os.Mkdir(config.WikiDir, 0755)
 	http.HandleFunc("/", homeHandler("home", getNav))
 	http.HandleFunc("/search/", searchHandler(getNav))
 	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))
