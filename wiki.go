@@ -16,6 +16,8 @@ import (
 
 	"fmt"
 
+	"strings"
+
 	"github.com/golang-commonmark/markdown"
 )
 
@@ -43,7 +45,7 @@ func checkErr(err error) {
 }
 
 func (p *wikiPage) save() error {
-	filename := wikiDir + p.Title
+	filename := wikiDir + p.Title + ".md"
 	return ioutil.WriteFile(filename, []byte(p.Body), 0600)
 }
 
@@ -57,7 +59,7 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 
 }
 func loadPage(p *wikiPage) (*wikiPage, error) {
-	filename := wikiDir + p.Title
+	filename := wikiDir + p.Title + ".md"
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -184,7 +186,7 @@ func getWikiList(path string) []string {
 
 	var names []string
 	for _, f := range files {
-		names = append(names, f.Name())
+		names = append(names, strings.TrimSuffix(f.Name(), ".md"))
 	}
 
 	return names
