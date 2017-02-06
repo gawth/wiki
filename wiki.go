@@ -14,6 +14,8 @@ import (
 
 	"log"
 
+	"fmt"
+
 	"github.com/golang-commonmark/markdown"
 )
 
@@ -59,15 +61,21 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
+		fmt.Println(err)
 		return p, err
 	}
 	defer file.Close()
 
 	body, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Println(err)
+		return p, err
+	}
 	p.Body = template.HTML(body)
 
 	info, err := file.Stat()
 	if err != nil {
+		fmt.Println(err)
 		return p, err
 	}
 
@@ -140,7 +148,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view|search)/([a-zA-Z0-9 ]*)$")
+var validPath = regexp.MustCompile("^/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ ]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +156,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn n
 		if len(wword) == 0 {
 			m := validPath.FindStringSubmatch(r.URL.Path)
 			if m == nil {
+				fmt.Println("Dont like " + r.URL.Path)
 				http.NotFound(w, r)
 				return
 			}
