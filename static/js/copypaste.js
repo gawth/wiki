@@ -7,7 +7,10 @@ function columnWidth(rows, columnIndex) {
 }
 
 function looksLikeTable(data) {
-    return true
+    if (data.indexOf("\t") != -1) {
+        return true
+    }
+    return false
 }
 
 editor.addEventListener("paste", function(event) {
