@@ -1,7 +1,3 @@
-// Copyright 2010 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package main
 
 import (
@@ -29,6 +25,8 @@ type basePage struct {
 }
 type wikiPage struct {
 	Body     template.HTML
+	Tags     string
+	TagArray []string
 	Created  string
 	Modified string
 	basePage
@@ -44,9 +42,26 @@ func checkErr(err error) {
 	}
 }
 
+func getWikiFilename(folder, name string) string {
+	return folder + name + ".md"
+}
+
+func getWikiTagsFilename(folder, name string) string {
+	return folder + "tags/" + name
+}
 func (p *wikiPage) save() error {
-	filename := wikiDir + p.Title + ".md"
-	return ioutil.WriteFile(filename, []byte(p.Body), 0600)
+	filename := getWikiFilename(wikiDir, p.Title)
+	err := ioutil.WriteFile(filename, []byte(p.Body), 0600)
+	if err != nil {
+		return err
+	}
+
+	tagsfile := getWikiTagsFilename(wikiDir, p.Title)
+	err = ioutil.WriteFile(tagsfile, []byte(p.Tags), 0600)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
@@ -59,7 +74,7 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 
 }
 func loadPage(p *wikiPage) (*wikiPage, error) {
-	filename := wikiDir + p.Title + ".md"
+	filename := getWikiFilename(wikiDir, p.Title)
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -82,6 +97,13 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 	}
 
 	p.Modified = info.ModTime().String()
+
+	tags, err := ioutil.ReadFile(getWikiTagsFilename(wikiDir, p.Title))
+	if err == nil {
+		p.Tags = string(tags)
+		p.TagArray = strings.Split(p.Tags, ",")
+	}
+
 	return p, nil
 }
 
@@ -127,6 +149,9 @@ func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Reques
 func saveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	body := r.FormValue("body")
 	p.Body = template.HTML(body)
+
+	p.Tags = r.FormValue("wikitags")
+
 	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -209,6 +234,7 @@ func main() {
 	wikiDir = config.WikiDir
 
 	os.Mkdir(config.WikiDir, 0755)
+	os.Mkdir(config.WikiDir+"tags", 0755)
 	http.HandleFunc("/", homeHandler("home", getNav))
 	http.HandleFunc("/search/", searchHandler(getNav))
 	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))

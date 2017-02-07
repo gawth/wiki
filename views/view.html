@@ -11,6 +11,13 @@
             </p>
             <p> Modified {{.Modified}}</p>
 
+            <div class="tags">
+                <p>
+                    {{range .TagArray}}
+                    <div class="wikitag">{{.}}</div>
+                    {{end}}
+                </p>
+            </div>
             <p>[<a href="/edit/{{.Title}}">edit</a>]</p>
         </section>
     </div>
