@@ -146,18 +146,18 @@ func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Reques
 
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
+func saveHandler(w http.ResponseWriter, r *http.Request, wiki string) string {
 	body := r.FormValue("body")
-	p.Body = template.HTML(body)
-
-	p.Tags = r.FormValue("wikitags")
+	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body), Tags: r.FormValue("wikitags")}
 
 	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return ""
 	}
 	http.Redirect(w, r, "/view/"+p.Title, http.StatusFound)
+
+	return r.FormValue("wikitags")
 }
 
 var templates = template.Must(template.ParseFiles(
@@ -191,6 +191,20 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn n
 		}
 		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn()}}
 		fn(w, r, p)
+	}
+}
+
+func processSave(fn func(http.ResponseWriter, *http.Request, string) string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := validPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			fmt.Println("Dont like " + r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		tags := fn(w, r, m[2])
+
+		fmt.Println("Tags are :" + tags)
 	}
 }
 
@@ -239,7 +253,7 @@ func main() {
 	http.HandleFunc("/search/", searchHandler(getNav))
 	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))
 	http.HandleFunc("/edit/", makeHandler(editHandler, getNav))
-	http.HandleFunc("/save/", makeHandler(saveHandler, getNav))
+	http.HandleFunc("/save/", processSave(saveHandler))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	http.ListenAndServe(":8080", nil)

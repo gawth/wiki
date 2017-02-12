@@ -12,7 +12,7 @@ func TestGetWikisForTag(t *testing.T) {
 	}
 
 	// Act
-	actual := target.GetWikisForTag("testtag")
+	actual := target.GetWikisForTag()
 
 	// Assert
 	if len(actual) != len(expected) {
@@ -29,11 +29,21 @@ func TestGetWikisForTag(t *testing.T) {
 }
 
 func TestAssociateTagWiki(t *testing.T) {
-	target := TagIndex(make(map[string][]Tag))
+	target := TagIndex(make(map[string]Tag))
 
-	target.AssociateTagWiki("wiki", "tag1")
+	target.AssociateTagToWiki("wiki", "tag1")
 
-	if len(target["tag1"]) != 1 {
+	if target.GetTag("tag1").TagName != "tag1" {
 		t.Errorf("TestAssociateTagWiki: Failed to associate wiki to tag")
+	}
+	target.AssociateTagToWiki("wiki2", "tag1")
+
+	tg := target.GetTag("tag1")
+	if tg.TagName != "tag1" {
+		t.Errorf("TestAssociateTagWiki: Failed to associate wiki to tag")
+	}
+
+	if len(tg.GetWikisForTag()) != 2 {
+		t.Errorf("TestAssociateTagWiki: Wrong num of tags stored:%v", len(tg.GetWikisForTag()))
 	}
 }
