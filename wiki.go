@@ -18,10 +18,11 @@ import (
 )
 
 var wikiDir string
+var tagDir string
 
 type basePage struct {
 	Title string
-	Nav   []string
+	Nav   nav
 }
 type wikiPage struct {
 	Body     template.HTML
@@ -35,6 +36,10 @@ type searchPage struct {
 	basePage
 	Results []QueryResults
 }
+type nav struct {
+	Wikis []string
+	Tags  TagIndex
+}
 
 func checkErr(err error) {
 	if err != nil {
@@ -46,8 +51,8 @@ func getWikiFilename(folder, name string) string {
 	return folder + name + ".md"
 }
 
-func getWikiTagsFilename(folder, name string) string {
-	return folder + "tags/" + name
+func getWikiTagsFilename(name string) string {
+	return tagDir + name
 }
 func (p *wikiPage) save() error {
 	filename := getWikiFilename(wikiDir, p.Title)
@@ -56,7 +61,7 @@ func (p *wikiPage) save() error {
 		return err
 	}
 
-	tagsfile := getWikiTagsFilename(wikiDir, p.Title)
+	tagsfile := getWikiTagsFilename(p.Title)
 	err = ioutil.WriteFile(tagsfile, []byte(p.Tags), 0600)
 	if err != nil {
 		return err
@@ -98,7 +103,7 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 
 	p.Modified = info.ModTime().String()
 
-	tags, err := ioutil.ReadFile(getWikiTagsFilename(wikiDir, p.Title))
+	tags, err := ioutil.ReadFile(getWikiTagsFilename(p.Title))
 	if err == nil {
 		p.Tags = string(tags)
 		p.TagArray = strings.Split(p.Tags, ",")
@@ -137,7 +142,7 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-type navFunc func() []string
+type navFunc func() nav
 
 func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -214,8 +219,11 @@ func (m byModTime) Len() int           { return len(m) }
 func (m byModTime) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m byModTime) Less(i, j int) bool { return m[i].ModTime().Before(m[j].ModTime()) }
 
-func getNav() []string {
-	return getWikiList(wikiDir)
+func getNav() nav {
+	return nav{
+		Wikis: getWikiList(wikiDir),
+		Tags:  IndexTags(tagDir),
+	}
 }
 func getWikiList(path string) []string {
 	files, err := ioutil.ReadDir(path)
@@ -249,6 +257,7 @@ func main() {
 	}
 
 	wikiDir = config.WikiDir
+	tagDir = wikiDir + "/tags/"
 
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)

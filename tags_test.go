@@ -31,16 +31,16 @@ func TestGetWikisForTag(t *testing.T) {
 func TestAssociateTagWiki(t *testing.T) {
 	target := TagIndex(make(map[string]Tag))
 
-	target.AssociateTagToWiki("wiki", "tag1")
+	target.AssociateTagToWiki("wiki", " tag1 ")
 
 	if target.GetTag("tag1").TagName != "tag1" {
-		t.Errorf("TestAssociateTagWiki: Failed to associate wiki to tag")
+		t.Errorf("TestAssociateTagWiki: Failed to associate wiki to tag - check whitespace")
 	}
 	target.AssociateTagToWiki("wiki2", "tag1")
 
 	tg := target.GetTag("tag1")
 	if tg.TagName != "tag1" {
-		t.Errorf("TestAssociateTagWiki: Failed to associate wiki to tag")
+		t.Errorf("TestAssociateTagWiki: Failed to associate wiki to tag ")
 	}
 
 	if len(tg.GetWikisForTag()) != 2 {

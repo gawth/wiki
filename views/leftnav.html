@@ -1,14 +1,29 @@
 {{define "leftnav"}}
+<!-- -->
 <div id="menu">
     <div class="pure-menu">
         <a class="pure-menu-heading" href="/">Wikis</a>
         <ul class="pure-menu-list">
-            {{range .}}
-            <p>
-                <li class="pure-menu-item"><a href="/view/{{.}}">{{.}}</a></li>
-            </p>
+            {{range .Wikis}}
+            <li class="pure-menu-item"><a href="/view/{{.}}" class="pure-menu-link">{{.}}</a></li>
+            {{end}}
+            <!-- -->
+            <li class="pure-menu-heading">Tags</li>
+            {{range $key, $value := .Tags}}
+            <li class="pure-menu-item pure-menu-has-children">
+                <a href="#" id="menuLink1" class="pure-menu-link">{{$key}}</a>
+                <!-- -->
+                <ul class="pure-menu-children">
+                    {{range $value.Wikis}}
+                    <li class="pure-menu-item"> <a href="/view/{{.}}" class="pure-menu-link">{{.}}</a> </li>
+                    <!-- -->
+                    {{end}}
+                </ul>
+            </li>
             {{end}}
         </ul>
     </div>
 </div>
+
+<script src="/static/js/menu.js"></script>
 {{end}}

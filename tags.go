@@ -2,20 +2,23 @@ package main
 
 import "strings"
 
+import "io/ioutil"
+import "fmt"
+
 // Tag used to store a tag and associated wiki titles
 type Tag struct {
 	TagName string
-	wikis   []string
+	Wikis   []string
 }
 
 // GetWikisForTag returns a list of wikis for a tag
 func (t *Tag) GetWikisForTag() []string {
-	return t.wikis
+	return t.Wikis
 }
 
 // AddWiki adds a wiki title to the tag
 func (t *Tag) AddWiki(wiki string) {
-	t.wikis = append(t.wikis, wiki)
+	t.Wikis = append(t.Wikis, wiki)
 }
 
 // GetTagsFromString takes a string of comma separated tags and converts to
@@ -31,10 +34,13 @@ type TagIndex map[string]Tag
 
 // AssociateTagToWiki adds a wiki page to a tag in the index
 func (t TagIndex) AssociateTagToWiki(wiki, tag string) {
+	tag = strings.TrimSpace(tag)
 	val, exists := t[tag]
 	if !exists {
+		fmt.Println("New tag:" + tag)
 		val = Tag{TagName: tag}
 	}
+	fmt.Println("   adding wiki : " + wiki)
 	val.AddWiki(wiki)
 	t[tag] = val
 
@@ -43,4 +49,23 @@ func (t TagIndex) AssociateTagToWiki(wiki, tag string) {
 // GetTag returns the Tag from the tag index
 func (t TagIndex) GetTag(tag string) Tag {
 	return t[tag]
+}
+
+// IndexTags reads tags files from the file system and constructs
+// an index
+func IndexTags(path string) TagIndex {
+	files, err := ioutil.ReadDir(path)
+	checkErr(err)
+
+	index := TagIndex(make(map[string]Tag))
+
+	for _, f := range files {
+		contents, err := ioutil.ReadFile(path + f.Name())
+		checkErr(err)
+
+		for _, t := range GetTagsFromString(string(contents)) {
+			index.AssociateTagToWiki(f.Name(), t)
+		}
+	}
+	return index
 }
