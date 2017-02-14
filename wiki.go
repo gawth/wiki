@@ -225,7 +225,10 @@ func getWikiList(path string) []string {
 
 	var names []string
 	for _, f := range files {
-		names = append(names, strings.TrimSuffix(f.Name(), ".md"))
+		// Ignore anything that isnt an md file
+		if strings.HasSuffix(f.Name(), ".md") {
+			names = append(names, strings.TrimSuffix(f.Name(), ".md"))
+		}
 	}
 
 	return names
