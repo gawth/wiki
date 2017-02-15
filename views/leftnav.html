@@ -1,7 +1,7 @@
 {{define "leftnav"}}
 <!-- -->
 <div id="menu">
-    <div class="pure-menu">
+    <div class="pure-menu custom-restricted-width">
         <a class="pure-menu-heading" href="/">Wikis</a>
         <ul class="pure-menu-list">
             {{range .Wikis}}
@@ -13,9 +13,9 @@
             <li class="pure-menu-item pure-menu-has-children">
                 <a href="#" id="menuLink1" class="pure-menu-link">{{$key}}</a>
                 <!-- -->
-                <ul class="pure-menu-children">
+                <ul class="pure-menu-children" role="menu">
                     {{range $value.Wikis}}
-                    <li class="pure-menu-item"> <a href="/view/{{.}}" class="pure-menu-link">{{.}}</a> </li>
+                    <li class="pure-menu-item"> <a href="/view/{{.}}" class="pure-menu-link pure-menu-active">{{.}}</a> </li>
                     <!-- -->
                     {{end}}
                 </ul>
