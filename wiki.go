@@ -255,7 +255,7 @@ func parseWikiWords(target []byte) []byte {
 	return wikiWord.ReplaceAll(target, []byte("<a href=\"/view/$1\">$1</a>"))
 }
 
-func logginHandler(next http.Handler) http.Handler {
+func loggingHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
 		next.ServeHTTP(w, r)
@@ -279,6 +279,7 @@ func validate(page http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie("Auth")
 		if err != nil {
+			log.Printf("No cookie: %v", err)
 			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
 			return
 		}
@@ -287,9 +288,10 @@ func validate(page http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method")
 			}
-			return []byte("secret"), nil
+			return []byte("thisisasecret"), nil
 		})
 		if err != nil {
+			log.Printf("Didnt get the token")
 			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
 			return
 		}
@@ -298,13 +300,48 @@ func validate(page http.Handler) http.Handler {
 			ctx := context.WithValue(req.Context(), MyKey, *claims)
 			page.ServeHTTP(res, req.WithContext(ctx))
 		} else {
+			log.Printf("Dodgy claim")
 			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 	})
 }
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "login", nil)
+	if r.Method == "GET" {
+		renderTemplate(w, "login", nil)
+	} else if r.Method == "POST" {
+		username := r.PostFormValue("username")
+		password := r.PostFormValue("password")
+
+		log.Printf("Logging in %v:%v", username, password)
+
+		if username == "gawth" && password == "fred" {
+			expireToken := time.Now().Add(time.Hour * 1).Unix()
+			expireCookie := time.Now().Add(time.Hour * 1)
+
+			claims := Claims{
+				"gawth",
+				jwt.StandardClaims{
+					ExpiresAt: expireToken,
+					Issuer:    "localhost",
+				},
+			}
+
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+			signedToken, _ := token.SignedString([]byte("thisisasecret"))
+
+			cookie := http.Cookie{Name: "Auth", Value: signedToken, Expires: expireCookie, HttpOnly: true, Secure: true, Path: "/"}
+			http.SetCookie(w, &cookie)
+			log.Println("Logged In Ok")
+
+			http.Redirect(w, r, "/", 307)
+		}
+
+	} else {
+		http.Error(w, "Invalid request method.", 405)
+	}
+
 }
 
 func main() {
@@ -320,15 +357,15 @@ func main() {
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
 
-	commonHandlers := alice.New(logginHandler, validate)
-	logginHandler := alice.New(logginHandler)
+	authHandlers := alice.New(loggingHandler, validate)
+	noauthHandlers := alice.New(loggingHandler)
 
-	http.Handle("/", commonHandlers.ThenFunc(homeHandler("home", getNav)))
-	http.Handle("/login/", logginHandler.ThenFunc(loginHandler))
-	http.Handle("/search/", commonHandlers.ThenFunc(searchHandler(getNav)))
-	http.Handle("/view/", commonHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
-	http.Handle("/edit/", commonHandlers.ThenFunc(makeHandler(editHandler, getNav)))
-	http.Handle("/save/", commonHandlers.ThenFunc(processSave(saveHandler)))
+	http.Handle("/", authHandlers.ThenFunc(homeHandler("home", getNav)))
+	http.Handle("/login/", noauthHandlers.ThenFunc(loginHandler))
+	http.Handle("/search/", authHandlers.ThenFunc(searchHandler(getNav)))
+	http.Handle("/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
+	http.Handle("/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
+	http.Handle("/save/", authHandlers.ThenFunc(processSave(saveHandler)))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	err = http.ListenAndServeTLS(":443", "/Users/gawth/ssl/server.crt", "/Users/gawth/ssl/server.key", nil)
