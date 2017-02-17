@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang-commonmark/markdown"
 	"github.com/justinas/alice"
 )
@@ -171,6 +173,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string) string {
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
+	"views/login.html",
 	"views/home.html",
 	"views/search.html",
 	"views/index.html",
@@ -262,6 +265,48 @@ func logginHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+type Key int
+
+const MyKey Key = 0
+
+// Claims JWT schema of the data it will store
+type Claims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
+func validate(page http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		cookie, err := req.Cookie("Auth")
+		if err != nil {
+			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+
+		token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method")
+			}
+			return []byte("secret"), nil
+		})
+		if err != nil {
+			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+
+		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+			ctx := context.WithValue(req.Context(), MyKey, *claims)
+			page.ServeHTTP(res, req.WithContext(ctx))
+		} else {
+			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+	})
+}
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "login", nil)
+}
+
 func main() {
 
 	config, err := LoadConfig("config.json")
@@ -275,9 +320,11 @@ func main() {
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
 
-	commonHandlers := alice.New(logginHandler)
+	commonHandlers := alice.New(logginHandler, validate)
+	logginHandler := alice.New(logginHandler)
 
 	http.Handle("/", commonHandlers.ThenFunc(homeHandler("home", getNav)))
+	http.Handle("/login/", logginHandler.ThenFunc(loginHandler))
 	http.Handle("/search/", commonHandlers.ThenFunc(searchHandler(getNav)))
 	http.Handle("/view/", commonHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
 	http.Handle("/edit/", commonHandlers.ThenFunc(makeHandler(editHandler, getNav)))
