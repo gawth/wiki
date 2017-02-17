@@ -3,7 +3,6 @@ package main
 import "strings"
 
 import "io/ioutil"
-import "fmt"
 
 // Tag used to store a tag and associated wiki titles
 type Tag struct {
@@ -37,10 +36,8 @@ func (t TagIndex) AssociateTagToWiki(wiki, tag string) {
 	tag = strings.TrimSpace(tag)
 	val, exists := t[tag]
 	if !exists {
-		fmt.Println("New tag:" + tag)
 		val = Tag{TagName: tag}
 	}
-	fmt.Println("   adding wiki : " + wiki)
 	val.AddWiki(wiki)
 	t[tag] = val
 

@@ -14,7 +14,10 @@ import (
 
 	"strings"
 
+	"time"
+
 	"github.com/golang-commonmark/markdown"
+	"github.com/justinas/alice"
 )
 
 var wikiDir string
@@ -249,6 +252,16 @@ func parseWikiWords(target []byte) []byte {
 	return wikiWord.ReplaceAll(target, []byte("<a href=\"/view/$1\">$1</a>"))
 }
 
+func logginHandler(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		t1 := time.Now()
+		next.ServeHTTP(w, r)
+		t2 := time.Now()
+		log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+	}
+	return http.HandlerFunc(fn)
+}
+
 func main() {
 
 	config, err := LoadConfig("config.json")
@@ -261,11 +274,14 @@ func main() {
 
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
-	http.HandleFunc("/", homeHandler("home", getNav))
-	http.HandleFunc("/search/", searchHandler(getNav))
-	http.HandleFunc("/view/", makeHandler(viewHandler, getNav))
-	http.HandleFunc("/edit/", makeHandler(editHandler, getNav))
-	http.HandleFunc("/save/", processSave(saveHandler))
+
+	commonHandlers := alice.New(logginHandler)
+
+	http.Handle("/", commonHandlers.ThenFunc(homeHandler("home", getNav)))
+	http.Handle("/search/", commonHandlers.ThenFunc(searchHandler(getNav)))
+	http.Handle("/view/", commonHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
+	http.Handle("/edit/", commonHandlers.ThenFunc(makeHandler(editHandler, getNav)))
+	http.Handle("/save/", commonHandlers.ThenFunc(processSave(saveHandler)))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	err = http.ListenAndServeTLS(":443", "/Users/gawth/ssl/server.crt", "/Users/gawth/ssl/server.key", nil)
