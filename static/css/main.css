@@ -45,3 +45,7 @@ td {
 #logout {
     float: right;
 }
+
+.form-error {
+    color: #d45252;
+}

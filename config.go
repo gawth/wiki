@@ -32,7 +32,7 @@ func LoadConfig(path string) (*Config, error) {
 	// Set a default location for secure files not included in
 	// git
 	if config.KeyLocation == "" {
-		config.KeyLocation = "./excluded/cookiesecret.txt"
+		config.KeyLocation = "./excluded/"
 	}
 
 	return &config, nil
@@ -42,7 +42,7 @@ func LoadConfig(path string) (*Config, error) {
 // LoadCookieKey gets the secret key that will be used for
 // encrypting cookies
 func (c *Config) LoadCookieKey() []byte {
-	res, err := ioutil.ReadFile(c.KeyLocation)
+	res, err := ioutil.ReadFile(c.KeyLocation + "cookiesecret.txt")
 	checkErr(err)
 	return res
 }

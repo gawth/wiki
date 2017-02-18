@@ -14,6 +14,20 @@
                 <button type="submit" class="pure-button pure-button-primary">Login</button>
             </fieldset>
         </form>
+        <h1>Register</h1>
+        <form class="pure-form" action="/register/" method="POST">
+            <fieldset>
+                <legend>Register</legend>
+                <label>Username</label>
+                <input type="text" name="username">
+                <label>Password</label>
+                <input type="password" name="password">
+                <button type="submit" class="pure-button pure-button-primary">Login</button>
+            </fieldset>
+        </form>
+        <div class="form-error">
+            {{.}}
+        </div>
     </div>
 
 </body>

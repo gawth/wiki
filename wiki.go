@@ -273,7 +273,7 @@ func main() {
 
 	config.LoadCookieKey()
 
-	auth := Auth{secret: config.CookieKey}
+	auth := NewAuth(*config, persistUsers)
 
 	wikiDir = config.WikiDir
 	tagDir = wikiDir + "/tags/"
@@ -286,6 +286,7 @@ func main() {
 
 	http.Handle("/", authHandlers.ThenFunc(homeHandler("home", getNav)))
 	http.Handle("/login/", noauthHandlers.ThenFunc(auth.loginHandler))
+	http.Handle("/register/", noauthHandlers.ThenFunc(auth.registerHandler))
 	http.Handle("/logout/", authHandlers.ThenFunc(logoutHandler))
 	http.Handle("/search/", authHandlers.ThenFunc(searchHandler(getNav)))
 	http.Handle("/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
