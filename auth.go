@@ -155,7 +155,9 @@ func (a *Auth) getUser(username string) *User {
 func persistUsers(a Auth) error {
 	var buffer bytes.Buffer
 	for _, val := range a.users {
-		buffer.WriteString(fmt.Sprintf("%v,%v\n", val.username, val.password))
+		buffer.WriteString(val.username + ",")
+		buffer.Write(val.password)
+		buffer.WriteString("\n")
 	}
 	log.Printf(buffer.String())
 	ioutil.WriteFile(a.filepath+dataFile, buffer.Bytes(), 0600)
