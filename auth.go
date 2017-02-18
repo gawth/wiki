@@ -20,7 +20,12 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func validate(page http.Handler) http.Handler {
+// Auth is used to pass the secret key to the validate and login handler
+type Auth struct {
+	secret []byte
+}
+
+func (a *Auth) validate(page http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie("Auth")
 		if err != nil {
@@ -33,7 +38,7 @@ func validate(page http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method")
 			}
-			return []byte("thisisasecret"), nil
+			return a.secret, nil
 		})
 		if err != nil {
 			log.Printf("Didnt get the token")
@@ -51,7 +56,7 @@ func validate(page http.Handler) http.Handler {
 		}
 	})
 }
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		renderTemplate(w, "login", nil)
 	} else if r.Method == "POST" {
@@ -74,7 +79,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-			signedToken, _ := token.SignedString([]byte("thisisasecret"))
+			signedToken, _ := token.SignedString(a.secret)
 
 			cookie := http.Cookie{Name: "Auth", Value: signedToken, Expires: expireCookie, HttpOnly: true, Secure: true, Path: "/"}
 			http.SetCookie(w, &cookie)

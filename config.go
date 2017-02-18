@@ -7,7 +7,9 @@ import (
 
 // Config object loaded from disk at startup
 type Config struct {
-	WikiDir string
+	WikiDir     string
+	CookieKey   []byte
+	KeyLocation string
 }
 
 // LoadConfig reads in config from file and hydrates to a
@@ -27,6 +29,20 @@ func LoadConfig(path string) (*Config, error) {
 	// Make sure the path ends with a /
 	config.WikiDir = config.WikiDir + "/"
 
+	// Set a default location for secure files not included in
+	// git
+	if config.KeyLocation == "" {
+		config.KeyLocation = "./excluded/cookiesecret.txt"
+	}
+
 	return &config, nil
 
+}
+
+// LoadCookieKey gets the secret key that will be used for
+// encrypting cookies
+func (c *Config) LoadCookieKey() []byte {
+	res, err := ioutil.ReadFile(c.KeyLocation)
+	checkErr(err)
+	return res
 }

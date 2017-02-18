@@ -271,17 +271,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	config.LoadCookieKey()
+
+	auth := Auth{secret: config.CookieKey}
+
 	wikiDir = config.WikiDir
 	tagDir = wikiDir + "/tags/"
 
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
 
-	authHandlers := alice.New(loggingHandler, validate)
+	authHandlers := alice.New(loggingHandler, auth.validate)
 	noauthHandlers := alice.New(loggingHandler)
 
 	http.Handle("/", authHandlers.ThenFunc(homeHandler("home", getNav)))
-	http.Handle("/login/", noauthHandlers.ThenFunc(loginHandler))
+	http.Handle("/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	http.Handle("/logout/", authHandlers.ThenFunc(logoutHandler))
 	http.Handle("/search/", authHandlers.ThenFunc(searchHandler(getNav)))
 	http.Handle("/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
