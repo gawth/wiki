@@ -41,3 +41,7 @@ td {
     padding: 6px 6px 6px 12px;
     background: aliceblue no-repeat;
 }
+
+#logout {
+    float: right;
+}
