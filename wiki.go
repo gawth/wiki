@@ -294,6 +294,6 @@ func main() {
 	http.Handle("/save/", authHandlers.ThenFunc(processSave(saveHandler)))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	err = http.ListenAndServeTLS(":443", "/Users/gawth/ssl/server.crt", "/Users/gawth/ssl/server.key", nil)
+	err = http.ListenAndServeTLS(":443", "/home/gawth/ssl/server.crt", "/home/gawth/ssl/server.key", nil)
 	checkErr(err)
 }
