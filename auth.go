@@ -31,6 +31,7 @@ type Auth struct {
 	users    map[string]User
 	persist  func(Auth) error
 	filepath string
+	Attempts chan int
 }
 
 func (a *Auth) validate(page http.Handler) http.Handler {
@@ -68,10 +69,15 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		renderTemplate(w, "login", nil)
 	} else if r.Method == "POST" {
+		select {
+		case <-a.Attempts:
+		default:
+			// Exhausted logins
+			renderTemplate(w, "login", "Login Blocked")
+			return
+		}
 		username := r.PostFormValue("username")
 		password := r.PostFormValue("password")
-
-		log.Printf("Logging in %v:%v", username, password)
 
 		user := a.getUser(username)
 		if user == nil {
@@ -103,6 +109,7 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &cookie)
 		log.Println("Logged In Ok")
 
+		a.Attempts = make(chan int, 3)
 		http.Redirect(w, r, "/", 307)
 
 	} else {
@@ -114,6 +121,13 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 func (a *Auth) registerHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Invalid method", 405)
+	}
+	select {
+	case <-a.Attempts:
+	default:
+		// Exhausted logins
+		renderTemplate(w, "login", "Register Blocked")
+		return
 	}
 
 	u := NewUser(r.PostFormValue("username"), r.PostFormValue("password"))
@@ -159,7 +173,6 @@ func persistUsers(a Auth) error {
 		buffer.Write(val.password)
 		buffer.WriteString("\n")
 	}
-	log.Printf(buffer.String())
 	ioutil.WriteFile(a.filepath+dataFile, buffer.Bytes(), 0600)
 	return nil
 }
@@ -177,16 +190,18 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func NewAuth(config Config, fn func(Auth) error) Auth {
 	auth := Auth{secret: config.CookieKey, persist: fn, filepath: config.KeyLocation}
 	auth.users = make(map[string]User)
+
+	// Use this to track login attempts...a successful login will reset it
+	auth.Attempts = make(chan int, 3)
+	for i := 0; i < 3; i++ {
+		auth.Attempts <- i
+	}
 	data, err := ioutil.ReadFile(config.KeyLocation + dataFile)
 	if err == nil {
-		log.Printf(string(data))
 		lines := bytes.Split(data, []byte("\n"))
-		log.Printf("Found %v\n ", len(lines))
 		for _, line := range lines {
-			log.Println("Looking")
 			vals := bytes.Split(line, []byte(","))
 			if len(vals) != 2 {
-				log.Printf("Found %v in line\n ", len(vals))
 				continue
 			}
 

@@ -10,8 +10,6 @@ import (
 
 	"log"
 
-	"fmt"
-
 	"strings"
 
 	"time"
@@ -86,21 +84,21 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return p, err
 	}
 	defer file.Close()
 
 	body, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return p, err
 	}
 	p.Body = template.HTML(body)
 
 	info, err := file.Stat()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return p, err
 	}
 
@@ -193,7 +191,6 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn n
 		if len(wword) == 0 {
 			m := validPath.FindStringSubmatch(r.URL.Path)
 			if m == nil {
-				fmt.Println("Dont like " + r.URL.Path)
 				http.NotFound(w, r)
 				return
 			}
@@ -208,13 +205,11 @@ func processSave(fn func(http.ResponseWriter, *http.Request, string) string) htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
-			fmt.Println("Dont like " + r.URL.Path)
 			http.NotFound(w, r)
 			return
 		}
-		tags := fn(w, r, m[2])
+		fn(w, r, m[2])
 
-		fmt.Println("Tags are :" + tags)
 	}
 }
 
@@ -265,6 +260,13 @@ func loggingHandler(next http.Handler) http.Handler {
 }
 
 func main() {
+	f, err := os.OpenFile("wiki.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		checkErr(err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
 
 	config, err := LoadConfig("config.json")
 	if err != nil {
