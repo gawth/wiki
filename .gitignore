@@ -2,3 +2,4 @@ wiki
 debug
 launch.json
 excluded
+*.log
