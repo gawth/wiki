@@ -75,7 +75,7 @@ func IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
 	// Loop through the files, setup a tag for PDF (extension) and then add to TI
 	for _, f := range files {
 		if strings.HasSuffix(strings.ToLower(f.Name()), strings.ToLower(fileExtension)) {
-			existing.AssociateTagToWiki(fileExtension, f.Name())
+			existing.AssociateTagToWiki(f.Name(), fileExtension)
 		}
 	}
 	return existing
