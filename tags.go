@@ -66,3 +66,18 @@ func IndexTags(path string) TagIndex {
 	}
 	return index
 }
+
+// IndexRawFiles adds in tags for a file extension tag
+func IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
+	files, err := ioutil.ReadDir(path)
+	checkErr(err)
+
+	// Loop through the files, setup a tag for PDF (extension) and then add to TI
+	for _, f := range files {
+		if strings.HasSuffix(strings.ToLower(f.Name()), strings.ToLower(fileExtension)) {
+			existing.AssociateTagToWiki(fileExtension, f.Name())
+		}
+	}
+	return existing
+
+}

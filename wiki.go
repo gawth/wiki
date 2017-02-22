@@ -244,7 +244,7 @@ func (m byModTime) Less(i, j int) bool { return m[i].ModTime().Before(m[j].ModTi
 func getNav() nav {
 	return nav{
 		Wikis: getWikiList(wikiDir),
-		Tags:  IndexTags(tagDir),
+		Tags:  IndexRawFiles(wikiDir, "PDF", IndexTags(tagDir)),
 	}
 }
 func getWikiList(path string) []string {
