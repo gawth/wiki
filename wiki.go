@@ -49,7 +49,7 @@ func checkErr(err error) {
 	}
 }
 func getPDFFilename(folder, name string) string {
-	return folder + name + ".pdf"
+	return folder + name
 }
 
 func getWikiFilename(folder, name string) string {
@@ -126,7 +126,7 @@ func checkForPDF(p *wikiPage) (*wikiPage, error) {
 	}
 	defer file.Close()
 
-	p.Body = template.HTML(fmt.Sprintf("<a href=\"/pdf/%v.pdf\">%v</a>", p.Title, p.Title))
+	p.Body = template.HTML(fmt.Sprintf("<a href=\"/raw/%v\">%v</a>", p.Title, p.Title))
 	return p, nil
 }
 
@@ -260,7 +260,7 @@ func getWikiList(path string) []string {
 			names = append(names, strings.TrimSuffix(f.Name(), ".md"))
 		}
 		if strings.HasSuffix(f.Name(), ".pdf") {
-			names = append(names, strings.TrimSuffix(f.Name(), ".pdf"))
+			names = append(names, f.Name())
 		}
 	}
 
@@ -320,7 +320,8 @@ func main() {
 	http.Handle("/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
 	http.Handle("/save/", authHandlers.ThenFunc(processSave(saveHandler)))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/raw/", http.StripPrefix("/raw/", http.FileServer(http.Dir(wikiDir))))
 
-	err = http.ListenAndServeTLS(":443", "/home/gawth/ssl/server.crt", "/home/gawth/ssl/server.key", nil)
+	err = http.ListenAndServeTLS(":443", "/Users/gawth/ssl/server.crt", "/Users/gawth/ssl/server.key", nil)
 	checkErr(err)
 }
