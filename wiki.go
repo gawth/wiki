@@ -10,6 +10,7 @@ import (
 
 	"log"
 
+	"fmt"
 	"strings"
 
 	"time"
@@ -46,6 +47,9 @@ func checkErr(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+func getPDFFilename(folder, name string) string {
+	return folder + name + ".pdf"
 }
 
 func getWikiFilename(folder, name string) string {
@@ -113,13 +117,31 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 	return p, nil
 }
 
+func checkForPDF(p *wikiPage) (*wikiPage, error) {
+	filename := getPDFFilename(wikiDir, p.Title)
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return p, err
+	}
+	defer file.Close()
+
+	p.Body = template.HTML(fmt.Sprintf("<a href=\"/pdf/%v.pdf\">%v</a>", p.Title, p.Title))
+	return p, nil
+}
+
 func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	p, err := convertMarkdown(loadPage(p))
 	if err != nil {
-		http.Redirect(w, r, "/edit/"+p.Title, http.StatusFound)
-		return
+		p, err = checkForPDF(p)
+		if err != nil {
+			http.Redirect(w, r, "/edit/"+p.Title, http.StatusFound)
+			return
+		}
+	} else {
+		p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
 	}
-	p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
+
 	renderTemplate(w, "view", p)
 }
 
@@ -236,6 +258,9 @@ func getWikiList(path string) []string {
 		// Ignore anything that isnt an md file
 		if strings.HasSuffix(f.Name(), ".md") {
 			names = append(names, strings.TrimSuffix(f.Name(), ".md"))
+		}
+		if strings.HasSuffix(f.Name(), ".pdf") {
+			names = append(names, strings.TrimSuffix(f.Name(), ".pdf"))
 		}
 	}
 
