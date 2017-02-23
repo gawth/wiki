@@ -3,3 +3,4 @@ debug
 launch.json
 excluded
 *.log
+config.json
