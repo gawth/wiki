@@ -279,6 +279,17 @@ Hides the menu at `48em`, but modify this based on your app's needs.
         position: relative;
         left: 150px;
     }
+    .content {
+        padding-left: 2em;
+        padding-right: 2em;
+        margin-left: 0px;
+    }
+    #help-table {
+        visibility: hidden;
+    }
+    #editing {
+        width: 110%;
+    }
 }
 
 .pure-menu-active>.pure-menu-children,
