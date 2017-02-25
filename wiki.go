@@ -322,6 +322,6 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/raw/", http.StripPrefix("/raw/", http.FileServer(http.Dir(wikiDir))))
 
-	err = http.ListenAndServeTLS(":443", "excluded/server.crt", "excluded/server.key", nil)
+	err = http.ListenAndServe(":1972", nil)
 	checkErr(err)
 }
