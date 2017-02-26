@@ -165,6 +165,14 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+func redirectHandler(w http.ResponseWriter, r *http.Request) {
+	target := "https://" + r.Host + r.URL.Path
+	if len(r.URL.RawQuery) > 0 {
+		target += "?" + r.URL.RawQuery
+	}
+	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+}
+
 type navFunc func() nav
 
 func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Request) {
@@ -315,6 +323,7 @@ func main() {
 	// Listen for normal traffic against root
 	http_mux := http.NewServeMux()
 	http_mux.Handle("/", http.FileServer(http.Dir("wwwroot")))
+	http_mux.HandleFunc("/wiki", redirectHandler)
 	go http.ListenAndServe(":80", http_mux)
 
 	// setup wiki on https
@@ -332,8 +341,8 @@ func main() {
 
 	err = http.ListenAndServeTLS(
 		":443",
-		"/etc/letsencrypt/live/gawthorpe.co.uk/cert.pem",
-		"/etc/letsencrypt/live/gawthorpe.co.uk/privkey.pem",
+		config.CertPath,
+		config.KeyPath,
 		https_mux)
 	checkErr(err)
 }

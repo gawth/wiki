@@ -10,6 +10,8 @@ type Config struct {
 	WikiDir     string
 	CookieKey   []byte
 	KeyLocation string
+	CertPath    string
+	KeyPath     string
 }
 
 // LoadConfig reads in config from file and hydrates to a
