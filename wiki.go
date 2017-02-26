@@ -312,21 +312,28 @@ func main() {
 	authHandlers := alice.New(loggingHandler, auth.validate)
 	noauthHandlers := alice.New(loggingHandler)
 
-	http.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
-	http.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
-	http.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
-	http.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
-	http.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
-	http.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
-	http.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
-	http.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
+	// Listen for normal traffic against root
+	http_mux := http.NewServeMux()
+	http_mux.Handle("/", http.FileServer(http.Dir("wwwroot")))
+	go http.ListenAndServe(":80", http_mux)
+
+	// setup wiki on https
+	https_mux := http.NewServeMux()
+	https_mux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
+	https_mux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
+	https_mux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
+	https_mux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
+	https_mux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
+	https_mux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
+	https_mux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
+	https_mux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
+	https_mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	https_mux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 
 	err = http.ListenAndServeTLS(
 		":443",
 		"/etc/letsencrypt/live/gawthorpe.co.uk/cert.pem",
 		"/etc/letsencrypt/live/gawthorpe.co.uk/privkey.pem",
-		nil)
+		https_mux)
 	checkErr(err)
 }
