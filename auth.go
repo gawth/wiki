@@ -34,12 +34,16 @@ type Auth struct {
 	Attempts chan int
 }
 
+func getHost(host string) string {
+	return "https://" + host + "/"
+}
 func (a *Auth) validate(page http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie("Auth")
 		if err != nil {
 			log.Printf("No cookie: %v", err)
-			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
+			log.Printf("Host is : %v", getHost(req.Host))
+			http.Redirect(res, req, getHost(req.Host)+"wiki/login", http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -51,7 +55,7 @@ func (a *Auth) validate(page http.Handler) http.Handler {
 		})
 		if err != nil {
 			log.Printf("Didnt get the token")
-			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
+			http.Redirect(res, req, "/wiki/login", http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -60,7 +64,7 @@ func (a *Auth) validate(page http.Handler) http.Handler {
 			page.ServeHTTP(res, req.WithContext(ctx))
 		} else {
 			log.Printf("Dodgy claim")
-			http.Redirect(res, req, "/login", http.StatusTemporaryRedirect)
+			http.Redirect(res, req, "/wiki/login", http.StatusTemporaryRedirect)
 			return
 		}
 	})
@@ -105,17 +109,24 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		signedToken, _ := token.SignedString(a.secret)
 
-		cookie := http.Cookie{Name: "Auth", Value: signedToken, Expires: expireCookie, HttpOnly: true, Secure: true, Path: "/"}
+		cookie := http.Cookie{Name: "Auth", Value: signedToken, Expires: expireCookie, HttpOnly: true, Secure: true, Path: "/wiki"}
 		http.SetCookie(w, &cookie)
 		log.Println("Logged In Ok")
 
-		a.Attempts = make(chan int, 3)
-		http.Redirect(w, r, "/", 307)
+		a.Attempts = resetAttempts(5)
+		http.Redirect(w, r, "/wiki", 307)
 
 	} else {
 		http.Error(w, "Invalid request method.", 405)
 	}
 
+}
+func resetAttempts(num int) chan int {
+	a := make(chan int, num)
+	for i := 0; i < 3; i++ {
+		a <- i
+	}
+	return a
 }
 
 func (a *Auth) registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +147,7 @@ func (a *Auth) registerHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		renderTemplate(w, "login", err.Error())
 	}
-	http.Redirect(w, r, "/login/", 307)
+	http.Redirect(w, r, "/wiki/login/", 307)
 
 }
 
@@ -181,9 +192,9 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Invalid method", 405)
 	}
-	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now(), Secure: true, Path: "/"}
+	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now(), Secure: true, Path: "/wiki"}
 	http.SetCookie(w, &deleteCookie)
-	http.Redirect(w, r, "/", 307)
+	http.Redirect(w, r, "/wiki", 307)
 }
 
 // NewAuth - Create a new auth object - reads in user DB as well
@@ -192,10 +203,8 @@ func NewAuth(config Config, fn func(Auth) error) Auth {
 	auth.users = make(map[string]User)
 
 	// Use this to track login attempts...a successful login will reset it
-	auth.Attempts = make(chan int, 3)
-	for i := 0; i < 3; i++ {
-		auth.Attempts <- i
-	}
+	auth.Attempts = resetAttempts(5)
+
 	data, err := ioutil.ReadFile(config.KeyLocation + dataFile)
 	if err == nil {
 		lines := bytes.Split(data, []byte("\n"))

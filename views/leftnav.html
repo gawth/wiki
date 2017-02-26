@@ -2,10 +2,10 @@
 <!-- -->
 <div id="menu">
     <div class="pure-menu custom-restricted-width">
-        <a class="pure-menu-heading" href="/">Wikis</a>
+        <a class="pure-menu-heading" href="/wiki">Wikis</a>
         <ul class="pure-menu-list">
             {{range .Wikis}}
-            <li class="pure-menu-item"><a href="/view/{{.}}" class="pure-menu-link">{{.}}</a></li>
+            <li class="pure-menu-item"><a href="/wiki/view/{{.}}" class="pure-menu-link">{{.}}</a></li>
             {{end}}
             <!-- -->
             <li class="pure-menu-heading">Tags</li>
@@ -15,7 +15,7 @@
                 <!-- -->
                 <ul class="pure-menu-children" role="menu">
                     {{range $value.Wikis}}
-                    <li class="pure-menu-item"> <a href="/view/{{.}}" class="pure-menu-link pure-menu-active">{{.}}</a> </li>
+                    <li class="pure-menu-item"> <a href="/wiki/view/{{.}}" class="pure-menu-link pure-menu-active">{{.}}</a> </li>
                     <!-- -->
                     {{end}}
                 </ul>

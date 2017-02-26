@@ -1,6 +1,7 @@
 .wikiBody {
     background: aliceblue;
     padding: 5px;
+    display: inline-block;
 }
 
 .wikitag {
@@ -11,7 +12,7 @@
 }
 
 .wikiBody img {
-    width: 100%;
+    width: 80%;
     height: auto;
 }
 

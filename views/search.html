@@ -11,7 +11,7 @@
             </header>
             <div class="search-results">
                 {{if .Results}} {{range .Results}}
-                <a href="/view/{{.WikiName}}">{{.WikiName}}</a>
+                <a href="/wiki/view/{{.WikiName}}">{{.WikiName}}</a>
                 <li> Line {{.LineNum}} - {{.Text}} </li>
                 {{end}} {{else}} NO RESULTS {{end}}
             </div>

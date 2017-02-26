@@ -126,7 +126,7 @@ func checkForPDF(p *wikiPage) (*wikiPage, error) {
 	}
 	defer file.Close()
 
-	p.Body = template.HTML(fmt.Sprintf("<a href=\"/raw/%v\">%v</a>", p.Title, p.Title))
+	p.Body = template.HTML(fmt.Sprintf("<a href=\"/wiki/raw/%v\">%v</a>", p.Title, p.Title))
 	return p, nil
 }
 
@@ -135,7 +135,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	if err != nil {
 		p, err = checkForPDF(p)
 		if err != nil {
-			http.Redirect(w, r, "/edit/"+p.Title, http.StatusFound)
+			http.Redirect(w, r, "/wiki/edit/"+p.Title, http.StatusFound)
 			return
 		}
 	} else {
@@ -183,7 +183,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string) string {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return ""
 	}
-	http.Redirect(w, r, "/view/"+p.Title, http.StatusFound)
+	http.Redirect(w, r, "/wiki/view/"+p.Title, http.StatusFound)
 
 	return r.FormValue("wikitags")
 }
@@ -205,12 +205,13 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ ]*)$")
+var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ ]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
 		if len(wword) == 0 {
+			log.Printf("Path is : %v", r.URL.Path)
 			m := validPath.FindStringSubmatch(r.URL.Path)
 			if m == nil {
 				http.NotFound(w, r)
@@ -271,7 +272,7 @@ func getWikiList(path string) []string {
 func parseWikiWords(target []byte) []byte {
 	var wikiWord = regexp.MustCompile(`\{([^\}]+)\}`)
 
-	return wikiWord.ReplaceAll(target, []byte("<a href=\"/view/$1\">$1</a>"))
+	return wikiWord.ReplaceAll(target, []byte("<a href=\"/wiki/view/$1\">$1</a>"))
 }
 
 func loggingHandler(next http.Handler) http.Handler {
@@ -311,17 +312,21 @@ func main() {
 	authHandlers := alice.New(loggingHandler, auth.validate)
 	noauthHandlers := alice.New(loggingHandler)
 
-	http.Handle("/", authHandlers.ThenFunc(homeHandler("home", getNav)))
-	http.Handle("/login/", noauthHandlers.ThenFunc(auth.loginHandler))
-	http.Handle("/register/", noauthHandlers.ThenFunc(auth.registerHandler))
-	http.Handle("/logout/", authHandlers.ThenFunc(logoutHandler))
-	http.Handle("/search/", authHandlers.ThenFunc(searchHandler(getNav)))
-	http.Handle("/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
-	http.Handle("/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
-	http.Handle("/save/", authHandlers.ThenFunc(processSave(saveHandler)))
+	http.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
+	http.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
+	http.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
+	http.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
+	http.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
+	http.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
+	http.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
+	http.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.Handle("/raw/", http.StripPrefix("/raw/", http.FileServer(http.Dir(wikiDir))))
+	http.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 
-	err = http.ListenAndServe(":1972", nil)
+	err = http.ListenAndServeTLS(
+		":443",
+		"/etc/letsencrypt/live/gawthorpe.co.uk/cert.pem",
+		"/etc/letsencrypt/live/gawthorpe.co.uk/privkey.pem",
+		nil)
 	checkErr(err)
 }

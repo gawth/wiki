@@ -20,14 +20,14 @@
 
             <div class="pure-u-15-24" id="editing">
                 <div class="l-box">
-                    <form id="wikiedit" class="pure-form pure-form-stacked" action="/save/{{.Title}}" method="POST">
+                    <form id="wikiedit" class="pure-form pure-form-stacked" action="/wiki/save/{{.Title}}" method="POST">
                         <fieldset>
                             <textarea id="wikiedit" class="pure-input-1" rows=20 name="body">{{.Body}}</textarea>
                             <label for="wikitags">
                                 Tags <input type="text" id="wikitags" name="wikitags" placeholder="tags comma separated" value="{{.Tags}}">
                             </label>
                             <button id="wikisubmit" type="submit" class="pure-button pure-button-primary">Save</button>
-                            <a class="pure-button" href="/view/{{.Title}}">Cancel</a>
+                            <a class="pure-button" href="/wiki/view/{{.Title}}">Cancel</a>
                         </fieldset>
                     </form>
                 </div>
