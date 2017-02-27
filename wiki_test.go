@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
 var ParseData = []struct {
 	source string
@@ -19,13 +16,13 @@ func TestParseQueryResults(t *testing.T) {
 	for _, td := range ParseData {
 		res := ParseQueryResults([]string{td.source})
 		if res[0].WikiName != td.res.WikiName {
-			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract wiki name %v: %v", res[0].WikiName, td.res.WikiName))
+			t.Errorf("ParseQueryResult: Failed to extract wiki name %v: %v", res[0].WikiName, td.res.WikiName)
 		}
 		if res[0].LineNum != td.res.LineNum {
-			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract line num %v: %v", res[0].LineNum, td.res.LineNum))
+			t.Errorf("ParseQueryResult: Failed to extract line num %v: %v", res[0].LineNum, td.res.LineNum)
 		}
 		if res[0].Text != td.res.Text {
-			t.Error(fmt.Sprintf("ParseQueryResult: Failed to extract text %v: %v", res[0].Text, td.res.Text))
+			t.Errorf("ParseQueryResult: Failed to extract text %v: %v", res[0].Text, td.res.Text)
 		}
 
 	}

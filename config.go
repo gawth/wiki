@@ -12,6 +12,8 @@ type Config struct {
 	KeyLocation string
 	CertPath    string
 	KeyPath     string
+	HTTPPort    int
+	HTTPSPort   int
 }
 
 // LoadConfig reads in config from file and hydrates to a
@@ -35,6 +37,14 @@ func LoadConfig(path string) (*Config, error) {
 	// git
 	if config.KeyLocation == "" {
 		config.KeyLocation = "./excluded/"
+	}
+
+	// Default http and https ports
+	if config.HTTPPort == 0 {
+		config.HTTPPort = 80
+	}
+	if config.HTTPSPort == 0 {
+		config.HTTPPort = 443
 	}
 
 	return &config, nil

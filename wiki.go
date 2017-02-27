@@ -15,6 +15,8 @@ import (
 
 	"time"
 
+	"strconv"
+
 	"github.com/golang-commonmark/markdown"
 	"github.com/justinas/alice"
 )
@@ -165,12 +167,27 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func redirectHandler(w http.ResponseWriter, r *http.Request) {
-	target := "https://" + r.Host + r.URL.Path
-	if len(r.URL.RawQuery) > 0 {
-		target += "?" + r.URL.RawQuery
+func redirectHandler(c Config) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		host := r.Host
+		var port string
+		hostparts := strings.Split(host, ":")
+		if len(hostparts) == 2 {
+			host = hostparts[0]
+			port = strconv.Itoa(c.HTTPSPort)
+		}
+		target := "https://" + host
+		if len(port) > 0 {
+			target += ":" + port
+
+		}
+		target += r.URL.Path
+		if len(r.URL.RawQuery) > 0 {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+
 	}
-	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 }
 
 type navFunc func() nav
@@ -321,28 +338,28 @@ func main() {
 	noauthHandlers := alice.New(loggingHandler)
 
 	// Listen for normal traffic against root
-	http_mux := http.NewServeMux()
-	http_mux.Handle("/", http.FileServer(http.Dir("wwwroot")))
-	http_mux.HandleFunc("/wiki", redirectHandler)
-	go http.ListenAndServe(":80", http_mux)
+	httpmux := http.NewServeMux()
+	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
+	httpmux.HandleFunc("/wiki", redirectHandler(*config))
+	go http.ListenAndServe(":"+strconv.Itoa(config.HTTPPort), httpmux)
 
 	// setup wiki on https
-	https_mux := http.NewServeMux()
-	https_mux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
-	https_mux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
-	https_mux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
-	https_mux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
-	https_mux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
-	https_mux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
-	https_mux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
-	https_mux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
-	https_mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	https_mux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
+	httpsmux := http.NewServeMux()
+	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
+	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
+	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
+	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
+	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
+	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
+	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
+	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
+	httpsmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 
 	err = http.ListenAndServeTLS(
-		":443",
+		":"+strconv.Itoa(config.HTTPSPort),
 		config.CertPath,
 		config.KeyPath,
-		https_mux)
+		httpsmux)
 	checkErr(err)
 }

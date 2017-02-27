@@ -14,9 +14,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Key int
+type key int
 
-const MyKey Key = 0
+const myKey key = 0
 const dataFile = "users.dat"
 
 // Claims JWT schema of the data it will store
@@ -60,7 +60,7 @@ func (a *Auth) validate(page http.Handler) http.Handler {
 		}
 
 		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-			ctx := context.WithValue(req.Context(), MyKey, *claims)
+			ctx := context.WithValue(req.Context(), myKey, *claims)
 			page.ServeHTTP(res, req.WithContext(ctx))
 		} else {
 			log.Printf("Dodgy claim")
