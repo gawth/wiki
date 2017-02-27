@@ -19,12 +19,17 @@ type Config struct {
 // LoadConfig reads in config from file and hydrates to a
 // config object
 func LoadConfig(path string) (*Config, error) {
+
+	config := Config{}
+	config.HTTPPort = 80
+	config.HTTPPort = 443
+	config.KeyLocation = "./excluded/"
+
 	conf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var config Config
 	err = json.Unmarshal(conf, &config)
 	if err != nil {
 		return nil, err
@@ -32,20 +37,6 @@ func LoadConfig(path string) (*Config, error) {
 
 	// Make sure the path ends with a /
 	config.WikiDir = config.WikiDir + "/"
-
-	// Set a default location for secure files not included in
-	// git
-	if config.KeyLocation == "" {
-		config.KeyLocation = "./excluded/"
-	}
-
-	// Default http and https ports
-	if config.HTTPPort == 0 {
-		config.HTTPPort = 80
-	}
-	if config.HTTPSPort == 0 {
-		config.HTTPPort = 443
-	}
 
 	return &config, nil
 
