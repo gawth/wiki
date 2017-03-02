@@ -94,8 +94,8 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		expireToken := time.Now().Add(time.Hour * 1).Unix()
-		expireCookie := time.Now().Add(time.Hour * 1)
+		expireToken := time.Now().Add(time.Hour * 24 * 7).Unix()
+		expireCookie := time.Now().Add(time.Hour * 24 * 7)
 
 		claims := Claims{
 			"gawth",
