@@ -340,6 +340,7 @@ func main() {
 	// Listen for normal traffic against root
 	httpmux := http.NewServeMux()
 	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
+	httpmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	httpmux.HandleFunc("/wiki", redirectHandler(*config))
 	go http.ListenAndServe(":"+strconv.Itoa(config.HTTPPort), httpmux)
 

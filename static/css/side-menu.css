@@ -52,7 +52,7 @@ The content `<div>` is where all your content goes.
     padding: 0 2em;
     margin-left: 130px;
     margin-bottom: 50px;
-    line-height: 1.6em;
+    line-height: 1.4em;
 }
 
 .header {
@@ -89,7 +89,7 @@ appears on the left side of the page.
 */
 
 #menu {
-    margin-left: -150px;
+    /* margin-left: -150px; */
     /* "#menu" width */
     width: 150px;
     position: fixed;
@@ -107,12 +107,6 @@ appears on the left side of the page.
 /*
     All anchors inside the menu should be styled like this.
     */
-
-#menu a {
-    color: #999;
-    border: none;
-    padding: 0.6em 0 0.6em 0.6em;
-}
 
 
 /*
@@ -193,8 +187,8 @@ small screens.
 .menu-link {
     position: fixed;
     display: block;
-    /* show this only on small screens */
-    top: 0;
+    /* show this only on small screens 
+    top: 0;*/
     left: 0;
     /* "#menu width" */
     background: #000;
@@ -239,52 +233,18 @@ small screens.
 
 /* -- Responsive Styles (Media Queries) ------------------------------------- */
 
-
-/*
-Hides the menu at `48em`, but modify this based on your app's needs.
-*/
-
-@media (min-width: 48em) {
-    .header,
-    .content {
-        padding-left: 2em;
-        padding-right: 2em;
-    }
-    #layout {
-        padding-left: 150px;
-        /* left col width "#menu" */
-        left: 0;
-    }
-    #menu {
-        left: 150px;
-    }
-    .menu-link {
-        position: fixed;
-        left: 150px;
-        display: none;
-    }
-    #layout.active .menu-link {
-        left: 150px;
-    }
-}
-
 @media (max-width: 48em) {
-    /* Only apply this when the window is small. Otherwise, the following
-    case results in extra padding on the left:
-        * Make the window small.
-        * Tap the menu to trigger the active state.
-        * Make the window large again.
-    */
-    #layout.active {
-        position: relative;
-        left: 150px;
-    }
     .content {
         padding-left: 2em;
         padding-right: 2em;
         margin-left: 0px;
+        margin-right: 0px;
+        font-size: small;
     }
     #help-table {
+        visibility: hidden;
+    }
+    #menu {
         visibility: hidden;
     }
     #editing {
@@ -292,24 +252,289 @@ Hides the menu at `48em`, but modify this based on your app's needs.
     }
 }
 
-.pure-menu-active>.pure-menu-children,
-.pure-menu-allow-hover:hover>.pure-menu-children {
-    display: block;
-    position: static;
+@media (max-width: 30em) {
+    .content {
+        padding-right: 2em;
+    }
+    #editing {
+        width: 110%;
+    }
 }
 
 
-/* .custom-restricted-width { */
+/* -------------------------------- 
+
+Primary style
+
+-------------------------------- */
+
+.cd-accordion-menu body {
+    font-size: 1.6rem;
+    font-family: "Jaldi", sans-serif;
+    color: #ffffff;
+    background-color: #a0f6aa;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.cd-accordion-menu a {
+    color: #a0f6aa;
+    text-decoration: none;
+}
+
+.cd-accordion-menu h1 {
+    text-align: center;
+    width: 90%;
+    margin: 2em auto 0;
+    font-size: 2.4rem;
+    color: #507b55;
+    font-weight: bold;
+}
+
+@media only screen and (min-width: 600px) {
+    .cd-accordion-menu h1 {
+        font-size: 3.2rem;
+    }
+}
+
+.cd-accordion-menu input {
+    font-family: "Jaldi", sans-serif;
+    font-size: 1.6rem;
+}
+
+ol,
+ul {
+    list-style: none;
+}
 
 
-/* To limit the menu width to the content of the menu: */
+/* -------------------------------- 
+
+Main Components 
+
+-------------------------------- */
+
+.cd-accordion-menu {
+    width: 100%;
+    margin-left: -40px;
+}
+
+.cd-accordion-menu ul {
+    /* by default hide all sub menus */
+    display: none;
+}
+
+.cd-accordion-menu li {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.cd-accordion-menu input[type=checkbox] {
+    /* hide native checkbox */
+    position: absolute;
+    opacity: 0;
+}
+
+.cd-accordion-menu label,
+.cd-accordion-menu a {
+    border: none;
+    position: relative;
+    display: block;
+    padding: 0.6em 0 0.6em 0.6em;
+    /* background: #4d5158; */
+    box-shadow: inset 1 -1px #555960;
+    color: #999;
+    font-size: 0.6rem;
+}
+
+.no-touch .cd-accordion-menu label:hover,
+.no-touch .cd-accordion-menu a:hover {
+    background: #52565d;
+}
+
+.cd-accordion-menu label::before,
+.cd-accordion-menu label::after,
+.cd-accordion-menu a::after {
+    /* icons */
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.cd-accordion-menu label {
+    cursor: pointer;
+}
 
 
-/* display: inline-block;
-    /* Or set the width explicitly: */
+/*
+.cd-accordion-menu label::before,
+.cd-accordion-menu label::after {
+    background-image: url(../img/cd-icons.svg);
+    background-repeat: no-repeat;
+}
+*/
+
+.cd-accordion-menu label::before {
+    /* arrow icon */
+    left: 18px;
+    background-position: 0 0;
+    -webkit-transform: translateY(-50%) rotate(-90deg);
+    -moz-transform: translateY(-50%) rotate(-90deg);
+    -ms-transform: translateY(-50%) rotate(-90deg);
+    -o-transform: translateY(-50%) rotate(-90deg);
+    transform: translateY(-50%) rotate(-90deg);
+}
+
+.cd-accordion-menu label::after {
+    /* folder icons */
+    left: 41px;
+    background-position: -16px 0;
+}
 
 
-/* width: 10em; */
+/* image icon */
 
 
-/* } */
+/*
+.cd-accordion-menu a::after {
+    left: 36px;
+    background: url(../img/cd-icons.svg) no-repeat -48px 0;
+}
+*/
+
+.cd-accordion-menu input[type=checkbox]:checked+label::before {
+    /* rotate arrow */
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.cd-accordion-menu input[type=checkbox]:checked+label::after {
+    /* show open folder icon if item is checked */
+    background-position: -32px 0;
+}
+
+.cd-accordion-menu input[type=checkbox]:checked+label+ul,
+.cd-accordion-menu input[type=checkbox]:checked+label:nth-of-type(n)+ul {
+    /* use label:nth-of-type(n) to fix a bug on safari (<= 8.0.8) with multiple adjacent-sibling selectors*/
+    /* show children when item is checked */
+    display: block;
+}
+
+.cd-accordion-menu ul label,
+.cd-accordion-menu ul a {
+    /* background: #35383d; */
+    box-shadow: inset 0 -1px #41444a;
+    /* padding-left: 82px; */
+}
+
+.no-touch .cd-accordion-menu ul label:hover,
+.no-touch .cd-accordion-menu ul a:hover {
+    background: #3c3f45;
+}
+
+.cd-accordion-menu>li:last-of-type>label,
+.cd-accordion-menu>li:last-of-type>a,
+.cd-accordion-menu>li>ul>li:last-of-type label,
+.cd-accordion-menu>li>ul>li:last-of-type a {
+    box-shadow: none;
+}
+
+.cd-accordion-menu ul label::before {
+    left: 36px;
+}
+
+.cd-accordion-menu ul label::after,
+.cd-accordion-menu ul a::after {
+    left: 59px;
+}
+
+.cd-accordion-menu ul ul label,
+.cd-accordion-menu ul ul a {
+    padding-left: 100px;
+}
+
+.cd-accordion-menu ul ul label::before {
+    left: 54px;
+}
+
+.cd-accordion-menu ul ul label::after,
+.cd-accordion-menu ul ul a::after {
+    left: 77px;
+}
+
+.cd-accordion-menu ul ul ul label,
+.cd-accordion-menu ul ul ul a {
+    padding-left: 118px;
+}
+
+.cd-accordion-menu ul ul ul label::before {
+    left: 72px;
+}
+
+.cd-accordion-menu ul ul ul label::after,
+.cd-accordion-menu ul ul ul a::after {
+    left: 95px;
+}
+
+@media only screen and (min-width: 600px) {
+    .cd-accordion-menu label,
+    .cd-accordion-menu a {
+        padding: 0.6em 0 0.6em 0.6em;
+        font-size: 0.9rem;
+    }
+    .cd-accordion-menu label::before {
+        left: 24px;
+    }
+    .cd-accordion-menu label::after {
+        left: 53px;
+    }
+    .cd-accordion-menu ul label::before {
+        left: 48px;
+    }
+    .cd-accordion-menu ul label::after,
+    .cd-accordion-menu ul a::after {
+        left: 77px;
+    }
+    .cd-accordion-menu ul ul label,
+    .cd-accordion-menu ul ul a {
+        padding-left: 130px;
+    }
+    .cd-accordion-menu ul ul label::before {
+        left: 72px;
+    }
+    .cd-accordion-menu ul ul label::after,
+    .cd-accordion-menu ul ul a::after {
+        left: 101px;
+    }
+    .cd-accordion-menu ul ul ul label,
+    .cd-accordion-menu ul ul ul a {
+        padding-left: 154px;
+    }
+    .cd-accordion-menu ul ul ul label::before {
+        left: 96px;
+    }
+    .cd-accordion-menu ul ul ul label::after,
+    .cd-accordion-menu ul ul ul a::after {
+        left: 125px;
+    }
+}
+
+.cd-accordion-menu.animated label::before {
+    /* this class is used if you're using jquery to animate the accordion */
+    -webkit-transition: -webkit-transform 0.3s;
+    -moz-transition: -moz-transform 0.3s;
+    transition: transform 0.3s;
+}
