@@ -8,6 +8,7 @@ import (
 // Config object loaded from disk at startup
 type Config struct {
 	WikiDir     string
+	Logfile     string
 	CookieKey   []byte
 	KeyLocation string
 	CertPath    string

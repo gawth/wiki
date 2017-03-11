@@ -311,17 +311,19 @@ func loggingHandler(next http.Handler) http.Handler {
 }
 
 func main() {
-	f, err := os.OpenFile("wiki.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		checkErr(err)
-	}
-	defer f.Close()
-
-	log.SetOutput(f)
-
 	config, err := LoadConfig("config.json")
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if config.Logfile != "" {
+		f, err := os.OpenFile(config.Logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			checkErr(err)
+		}
+		defer f.Close()
+
+		log.SetOutput(f)
 	}
 
 	config.LoadCookieKey()
