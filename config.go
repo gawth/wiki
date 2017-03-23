@@ -23,7 +23,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	config := Config{}
 	config.HTTPPort = 80
-	config.HTTPPort = 443
+	config.HTTPSPort = 443
 	config.KeyLocation = "./excluded/"
 
 	conf, err := ioutil.ReadFile(path)
