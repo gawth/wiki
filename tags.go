@@ -3,6 +3,9 @@ package main
 import "strings"
 
 import "io/ioutil"
+import "path/filepath"
+import "os"
+import "log"
 
 // Tag used to store a tag and associated wiki titles
 type Tag struct {
@@ -51,33 +54,36 @@ func (t TagIndex) GetTag(tag string) Tag {
 // IndexTags reads tags files from the file system and constructs
 // an index
 func IndexTags(path string) TagIndex {
-	files, err := ioutil.ReadDir(path)
-	checkErr(err)
-
 	index := TagIndex(make(map[string]Tag))
 
-	for _, f := range files {
-		contents, err := ioutil.ReadFile(path + f.Name())
-		checkErr(err)
+	err := filepath.Walk(path, func(path string, info os.FileInfo, _ error) error {
+		log.Println("walk:" + path)
+		if !info.IsDir() {
+			contents, err := ioutil.ReadFile(path)
+			checkErr(err)
 
-		for _, t := range GetTagsFromString(string(contents)) {
-			index.AssociateTagToWiki(f.Name(), t)
+			for _, t := range GetTagsFromString(string(contents)) {
+				index.AssociateTagToWiki(info.Name(), t)
+			}
 		}
-	}
+		return nil
+	})
+	checkErr(err)
+
 	return index
 }
 
 // IndexRawFiles adds in tags for a file extension tag
 func IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
-	files, err := ioutil.ReadDir(path)
+
+	err := filepath.Walk(path, func(path string, info os.FileInfo, _ error) error {
+		if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(fileExtension)) {
+			existing.AssociateTagToWiki(info.Name(), fileExtension)
+		}
+		return nil
+	})
 	checkErr(err)
 
-	// Loop through the files, setup a tag for PDF (extension) and then add to TI
-	for _, f := range files {
-		if strings.HasSuffix(strings.ToLower(f.Name()), strings.ToLower(fileExtension)) {
-			existing.AssociateTagToWiki(f.Name(), fileExtension)
-		}
-	}
 	return existing
 
 }

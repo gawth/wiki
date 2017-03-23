@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 
@@ -61,14 +62,35 @@ func getWikiFilename(folder, name string) string {
 func getWikiTagsFilename(name string) string {
 	return tagDir + name
 }
+func createDir(filename string) error {
+	dir := filepath.Dir(filename)
+	if dir != "" {
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func (p *wikiPage) save() error {
 	filename := getWikiFilename(wikiDir, p.Title)
-	err := ioutil.WriteFile(filename, []byte(p.Body), 0600)
+
+	err := createDir(filename)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, []byte(p.Body), 0600)
 	if err != nil {
 		return err
 	}
 
 	tagsfile := getWikiTagsFilename(p.Title)
+
+	err = createDir(tagsfile)
+	if err != nil {
+		return err
+	}
 	err = ioutil.WriteFile(tagsfile, []byte(p.Tags), 0600)
 	if err != nil {
 		return err
@@ -230,7 +252,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ ]*)$")
+var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ /]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -274,6 +296,10 @@ func getNav() nav {
 	}
 }
 func getWikiList(path string) []string {
+	// TODO Need to change this to return a structure rather than an array of strings
+	// Can then set a name and a URL on each...then the template can simplify
+	// Need to decide how best deal with sub-wikis.  Do I embed them in the data structure? Or do
+	// I flatten out but flag in level somehow
 	files, err := ioutil.ReadDir(path)
 	checkErr(err)
 

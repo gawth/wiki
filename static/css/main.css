@@ -47,6 +47,10 @@ td {
     float: right;
 }
 
+#top-edit {
+    float: right;
+}
+
 .form-error {
     color: #d45252;
 }
