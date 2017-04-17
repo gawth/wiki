@@ -1,0 +1,24 @@
+{{template "header" .Title}}
+
+<body>
+
+    <div class="content">
+
+        <section>
+            <p>
+                <div class="wikiBody">{{.Body}}</div>
+            </p>
+            <p> Modified {{.Modified}}</p>
+
+            <div class="tags">
+                <p>
+                    {{range .TagArray}}
+                    <div class="wikitag">{{.}}</div>
+                    {{end}}
+                </p>
+            </div>
+        </section>
+    </div>
+</body>
+
+</html>
