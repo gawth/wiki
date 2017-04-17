@@ -302,8 +302,11 @@ Primary style
     font-size: 1.6rem;
 }
 
-ol,
-ul {
+.cd-accordion-menu ol {
+    list-style: none;
+}
+
+.cd-accordion-menu ul {
     list-style: none;
 }
 

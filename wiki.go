@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 
 	"log"
 
@@ -25,6 +24,8 @@ import (
 var wikiDir string
 var tagDir string
 
+var specialDir []string
+
 type basePage struct {
 	Title string
 	Nav   nav
@@ -40,10 +41,6 @@ type wikiPage struct {
 type searchPage struct {
 	basePage
 	Results []QueryResults
-}
-type nav struct {
-	Wikis []string
-	Tags  TagIndex
 }
 
 func checkErr(err error) {
@@ -283,45 +280,8 @@ func processSave(fn func(http.ResponseWriter, *http.Request, string) string) htt
 	}
 }
 
-type byModTime []os.FileInfo
-
-func (m byModTime) Len() int           { return len(m) }
-func (m byModTime) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
-func (m byModTime) Less(i, j int) bool { return m[i].ModTime().Before(m[j].ModTime()) }
-
-func getNav() nav {
-	return nav{
-		Wikis: getWikiList(wikiDir),
-		Tags:  IndexRawFiles(wikiDir, "PDF", IndexTags(tagDir)),
-	}
-}
-func getWikiList(path string) []string {
-	// TODO Need to change this to return a structure rather than an array of strings
-	// Can then set a name and a URL on each...then the template can simplify
-	// Need to decide how best deal with sub-wikis.  Do I embed them in the data structure? Or do
-	// I flatten out but flag in level somehow
-	files, err := ioutil.ReadDir(path)
-	checkErr(err)
-
-	sort.Sort(sort.Reverse(byModTime(files)))
-
-	var names []string
-	for _, f := range files {
-		// Ignore anything that isnt an md file
-		if strings.HasSuffix(f.Name(), ".md") {
-			names = append(names, strings.TrimSuffix(f.Name(), ".md"))
-		}
-		if strings.HasSuffix(f.Name(), ".pdf") {
-			names = append(names, f.Name())
-		}
-	}
-
-	return names
-
-}
-
 func parseWikiWords(target []byte) []byte {
-	var wikiWord = regexp.MustCompile(`\{([^\}]+)\}`)
+	var wikiWord = regexp.MustCompile(`\{\{([^\}]+)\}\}`)
 
 	return wikiWord.ReplaceAll(target, []byte("<a href=\"/wiki/view/$1\">$1</a>"))
 }
@@ -337,6 +297,7 @@ func loggingHandler(next http.Handler) http.Handler {
 }
 
 func main() {
+	specialDir = []string{"tags"}
 	config, err := LoadConfig("config.json")
 	if err != nil {
 		log.Fatal(err)

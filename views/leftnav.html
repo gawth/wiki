@@ -5,8 +5,24 @@
 <div id="menu">
     <a class="pure-menu-heading" href="/wiki">Wikis</a>
     <ul class="cd-accordion-menu">
-        {{range .Wikis}}
-        <li class=""><a href="/wiki/view/{{.}}" class="">{{.}}</a></li>
+        {{range $key, $value := .Wikis}}
+        <!-- -->
+        {{if .IsDir}}
+        <li class="has-children">
+            <input type="checkbox" name="sub-group-{{$key}}" id="sub-group-{{$key}}">
+            <label for="sub-group-{{$key}}">{{$value.Name}}</label>
+            <!-- -->
+            <ul class="">
+                {{range $value.SubNav}}
+                <li class=""> <a href="/wiki/view/{{$value.Name}}{{.Name}}" class="">{{$value.Name}}{{.Name}}</a> </li>
+                <!-- -->
+                {{end}}
+            </ul>
+        </li>
+        {{else}}
+        <li class=""><a href="/wiki/view/{{.Name}}" class="">{{.Name}}</a></li>
+        {{end}}
+        <!-- -->
         {{end}}
         <!-- -->
         <li class="pure-menu-heading">Tags</li>
