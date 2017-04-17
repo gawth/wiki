@@ -230,9 +230,20 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string) string {
 	return r.FormValue("wikitags")
 }
 
+func pubHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
+	p, err := convertMarkdown(loadPage(p))
+	if err != nil {
+	} else {
+		p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
+	}
+
+	renderTemplate(w, "pub", p)
+}
+
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
+	"views/pub.html",
 	"views/login.html",
 	"views/home.html",
 	"views/search.html",
@@ -248,6 +259,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 }
 
 var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ /]*)$")
+var validPubPath = regexp.MustCompile("^/pub/([a-zA-Z0-9\\.\\-_ /]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -262,6 +274,19 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn n
 			wword = m[2]
 		}
 		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn()}}
+		fn(w, r, p)
+	}
+}
+func makePubHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Path is : %v", r.URL.Path)
+		m := validPubPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			http.NotFound(w, r)
+			return
+		}
+		title := m[1]
+		p := &wikiPage{basePage: basePage{Title: title}}
 		fn(w, r, p)
 	}
 }
@@ -343,6 +368,7 @@ func main() {
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
 	httpsmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
+	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav)))
 
 	err = http.ListenAndServeTLS(
 		":"+strconv.Itoa(config.HTTPSPort),
