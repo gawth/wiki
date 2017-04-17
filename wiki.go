@@ -209,8 +209,6 @@ func redirectHandler(c Config) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-type navFunc func() nav
-
 func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		renderTemplate(w, page, fn())

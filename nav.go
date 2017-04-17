@@ -19,6 +19,8 @@ type nav struct {
 	Tags  TagIndex
 }
 
+type navFunc func() nav
+
 type byModTime []os.FileInfo
 
 func (m byModTime) Len() int           { return len(m) }
