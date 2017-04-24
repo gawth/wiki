@@ -349,15 +349,13 @@ func main() {
 	authHandlers := alice.New(loggingHandler, auth.validate)
 	noauthHandlers := alice.New(loggingHandler)
 
-	// Listen for normal traffic against root
 	httpmux := http.NewServeMux()
-	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
-	httpmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	httpmux.HandleFunc("/wiki", redirectHandler(*config))
-	go http.ListenAndServe(":"+strconv.Itoa(config.HTTPPort), httpmux)
-
+	httpsmux := httpmux
 	// setup wiki on https
-	httpsmux := http.NewServeMux()
+	if config.UseHttps {
+		httpsmux = http.NewServeMux()
+	}
+
 	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
@@ -366,14 +364,26 @@ func main() {
 	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
 	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
-	httpsmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav)))
 
-	err = http.ListenAndServeTLS(
-		":"+strconv.Itoa(config.HTTPSPort),
-		config.CertPath,
-		config.KeyPath,
-		httpsmux)
+	if config.UseHttps {
+		// Any routes that duplicate the http routing are only done here
+		httpsmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+		go http.ListenAndServeTLS(
+			":"+strconv.Itoa(config.HTTPSPort),
+			config.CertPath,
+			config.KeyPath,
+			httpsmux)
+
+		httpmux.HandleFunc("/wiki", redirectHandler(*config))
+	} else {
+	}
+
+	// Listen for normal traffic against root
+	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
+	httpmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	err = http.ListenAndServe(":"+strconv.Itoa(config.HTTPPort), httpmux)
 	checkErr(err)
+
 }

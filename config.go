@@ -15,6 +15,7 @@ type Config struct {
 	KeyPath     string
 	HTTPPort    int
 	HTTPSPort   int
+	UseHttps    bool
 }
 
 // LoadConfig reads in config from file and hydrates to a
@@ -25,6 +26,7 @@ func LoadConfig(path string) (*Config, error) {
 	config.HTTPPort = 80
 	config.HTTPSPort = 443
 	config.KeyLocation = "./excluded/"
+	config.UseHttps = false
 
 	conf, err := ioutil.ReadFile(path)
 	if err != nil {

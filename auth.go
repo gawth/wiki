@@ -34,16 +34,26 @@ type Auth struct {
 	Attempts chan int
 }
 
-func getHost(host string) string {
-	return "https://" + host + "/"
+func isSecure(req http.Request) bool {
+	if req.Proto == "HTTP/1.1" {
+		return false
+	}
+	return true
+}
+func getHost(req http.Request) string {
+	if !isSecure(req) {
+		return "http://" + req.Host + "/"
+	}
+	return "https://" + req.Host + "/"
 }
 func (a *Auth) validate(page http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie("Auth")
 		if err != nil {
 			log.Printf("No cookie: %v", err)
-			log.Printf("Host is : %v", getHost(req.Host))
-			http.Redirect(res, req, getHost(req.Host)+"wiki/login", http.StatusTemporaryRedirect)
+			log.Printf("Host is : %v", getHost(*req))
+			log.Printf("Proto is : %v", req.Proto)
+			http.Redirect(res, req, getHost(*req)+"wiki/login", http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -109,7 +119,8 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		signedToken, _ := token.SignedString(a.secret)
 
-		cookie := http.Cookie{Name: "Auth", Value: signedToken, Expires: expireCookie, HttpOnly: true, Secure: true, Path: "/wiki"}
+		cookie := http.Cookie{Name: "Auth", Value: signedToken, Expires: expireCookie, HttpOnly: true, Secure: isSecure(*r), Path: "/wiki"}
+
 		http.SetCookie(w, &cookie)
 		log.Println("Logged In Ok")
 
@@ -192,7 +203,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Invalid method", 405)
 	}
-	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now(), Secure: true, Path: "/wiki"}
+	deleteCookie := http.Cookie{Name: "Auth", Value: "none", Expires: time.Now(), Secure: isSecure(*r), Path: "/wiki"}
 	http.SetCookie(w, &deleteCookie)
 	http.Redirect(w, r, "/wiki", 307)
 }
