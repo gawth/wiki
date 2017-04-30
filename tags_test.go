@@ -47,3 +47,18 @@ func TestAssociateTagWiki(t *testing.T) {
 		t.Errorf("TestAssociateTagWiki: Wrong num of tags stored:%v", len(tg.GetWikisForTag()))
 	}
 }
+
+func TestAssociateTagWikiFolder(t *testing.T) {
+	target := TagIndex(make(map[string]Tag))
+
+	wikiName := "folder/wiki"
+	target.AssociateTagToWiki(wikiName, " tag1 ")
+	target.AssociateTagToWiki("folder/wiki2", "tag1")
+
+	tg := target.GetTag("tag1")
+	wikis := tg.GetWikisForTag()
+
+	if wikis[0] != wikiName {
+		t.Errorf("TestAssociateTagWikiFolder: wrong wiki returned, expected :%v but got :%v", wikiName, wikis[0])
+	}
+}

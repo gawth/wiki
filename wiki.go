@@ -143,6 +143,7 @@ func checkForPDF(p *wikiPage) (*wikiPage, error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
+		log.Printf("Failed to open %v, %v\n", p.Title, err.Error())
 		return p, err
 	}
 	defer file.Close()
@@ -341,7 +342,10 @@ func main() {
 	auth := NewAuth(*config, persistUsers)
 
 	wikiDir = config.WikiDir
-	tagDir = wikiDir + "/tags/"
+	if !strings.HasSuffix(wikiDir, "/") {
+		wikiDir = wikiDir + "/"
+	}
+	tagDir = wikiDir + "tags/" // Make sure this doesnt double up the / in the path...
 
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
