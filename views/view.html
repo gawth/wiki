@@ -14,6 +14,8 @@
             </p>
             <p> Modified {{.Modified}}</p>
 
+            Published? <input type="checkbox" id="wikipub" name="wikipub" {{if .Published}} checked {{end}} disabled readonly/>
+
             <div class="tags">
                 <p>
                     {{range .TagArray}}

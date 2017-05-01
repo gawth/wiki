@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 
 	"log"
@@ -23,6 +22,7 @@ import (
 
 var wikiDir string
 var tagDir string
+var pubDir string
 
 var specialDir []string
 
@@ -31,11 +31,12 @@ type basePage struct {
 	Nav   nav
 }
 type wikiPage struct {
-	Body     template.HTML
-	Tags     string
-	TagArray []string
-	Created  string
-	Modified string
+	Body      template.HTML
+	Tags      string
+	TagArray  []string
+	Created   string
+	Modified  string
+	Published bool
 	basePage
 }
 type searchPage struct {
@@ -59,39 +60,33 @@ func getWikiFilename(folder, name string) string {
 func getWikiTagsFilename(name string) string {
 	return tagDir + name
 }
-func createDir(filename string) error {
-	dir := filepath.Dir(filename)
-	if dir != "" {
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func getWikiPubFilename(name string) string {
+	return pubDir + name
 }
-func (p *wikiPage) save() error {
+func (p *wikiPage) save(s storage) error {
 	filename := getWikiFilename(wikiDir, p.Title)
-
-	err := createDir(filename)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filename, []byte(p.Body), 0600)
+	err := s.storeFile(filename, []byte(p.Body))
 	if err != nil {
 		return err
 	}
 
 	tagsfile := getWikiTagsFilename(p.Title)
+	err = s.storeFile(tagsfile, []byte(p.Tags))
+	if err != nil {
+		return err
+	}
 
-	err = createDir(tagsfile)
-	if err != nil {
-		return err
+	if p.Published {
+		pubfile := getWikiPubFilename(p.Title)
+		err = s.storeFile(pubfile, nil)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		// Need to delete the pub file if it exists
 	}
-	err = ioutil.WriteFile(tagsfile, []byte(p.Tags), 0600)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -133,6 +128,14 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 	if err == nil {
 		p.Tags = string(tags)
 		p.TagArray = strings.Split(p.Tags, ",")
+	}
+
+	pubfilename := getWikiPubFilename(p.Title)
+
+	pubfile, err := os.Open(pubfilename)
+	if err == nil {
+		p.Published = true
+		pubfile.Close()
 	}
 
 	return p, nil
@@ -217,11 +220,13 @@ func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Reques
 
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, wiki string) string {
+func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage) string {
 	body := r.FormValue("body")
+	log.Printf("Checkbox is : %v", r.FormValue("wikipub"))
 	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body), Tags: r.FormValue("wikitags")}
+	p.Published, _ = strconv.ParseBool(r.FormValue("wikipub"))
 
-	err := p.save()
+	err := p.save(s)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return ""
@@ -292,14 +297,14 @@ func makePubHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navf
 	}
 }
 
-func processSave(fn func(http.ResponseWriter, *http.Request, string) string) http.HandlerFunc {
+func processSave(fn func(http.ResponseWriter, *http.Request, string, storage) string, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			http.NotFound(w, r)
 			return
 		}
-		fn(w, r, m[2])
+		fn(w, r, m[2], s)
 
 	}
 }
@@ -346,6 +351,7 @@ func main() {
 		wikiDir = wikiDir + "/"
 	}
 	tagDir = wikiDir + "tags/" // Make sure this doesnt double up the / in the path...
+	pubDir = wikiDir + "pub/"  // Make sure this doesnt double up the / in the path...
 
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
@@ -360,6 +366,8 @@ func main() {
 		httpsmux = http.NewServeMux()
 	}
 
+	fstore := fileStorage{}
+
 	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
@@ -367,7 +375,7 @@ func main() {
 	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
 	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
 	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
-	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler)))
+	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav)))
 
