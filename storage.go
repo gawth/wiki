@@ -4,10 +4,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type storage interface {
 	storeFile(name string, content []byte) error
+	getPublicPages() []string
 }
 
 type fileStorage struct {
@@ -36,4 +38,23 @@ func (fs fileStorage) storeFile(name string, content []byte) error {
 	}
 
 	return nil
+}
+
+func indexPubPages(path string) []string {
+
+	var results []string
+
+	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
+		if !info.IsDir() {
+			results = append(results, strings.TrimPrefix(subpath, path))
+		}
+		return nil
+	})
+	checkErr(err)
+
+	return results
+}
+
+func (fs fileStorage) getPublicPages() []string {
+	return indexPubPages(pubDir)
 }

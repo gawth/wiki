@@ -76,8 +76,10 @@ func (p *wikiPage) save(s storage) error {
 		return err
 	}
 
+	log.Printf("Pub flag %v\n", p.Published)
 	if p.Published {
 		pubfile := getWikiPubFilename(p.Title)
+		log.Printf("Saving %v\n", pubfile)
 		err = s.storeFile(pubfile, nil)
 		if err != nil {
 			return err
@@ -184,7 +186,7 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 		}
 
 		results := ParseQueryResults(SearchWikis(wikiDir, term))
-		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn()}}
+		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn(nil)}}
 
 		renderTemplate(w, "search", p)
 	}
@@ -213,9 +215,9 @@ func redirectHandler(c Config) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func homeHandler(page string, fn navFunc) func(http.ResponseWriter, *http.Request) {
+func homeHandler(page string, fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		renderTemplate(w, page, fn())
+		renderTemplate(w, page, fn(s))
 	}
 
 }
@@ -224,7 +226,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 	body := r.FormValue("body")
 	log.Printf("Checkbox is : %v", r.FormValue("wikipub"))
 	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body), Tags: r.FormValue("wikitags")}
-	p.Published, _ = strconv.ParseBool(r.FormValue("wikipub"))
+	if r.FormValue("wikipub") == "on" {
+		p.Published = true
+	}
 
 	err := p.save(s)
 	if err != nil {
@@ -236,20 +240,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 	return r.FormValue("wikitags")
 }
 
-func pubHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
-	p, err := convertMarkdown(loadPage(p))
-	if err != nil {
-	} else {
-		p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
-	}
-
-	renderTemplate(w, "pub", p)
-}
-
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
 	"views/pub.html",
+	"views/pubhome.html",
 	"views/login.html",
 	"views/home.html",
 	"views/search.html",
@@ -265,7 +260,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 }
 
 var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ /]*)$")
-var validPubPath = regexp.MustCompile("^/pub/([a-zA-Z0-9\\.\\-_ /]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -279,20 +273,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn n
 			}
 			wword = m[2]
 		}
-		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn()}}
-		fn(w, r, p)
-	}
-}
-func makePubHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Path is : %v", r.URL.Path)
-		m := validPubPath.FindStringSubmatch(r.URL.Path)
-		if m == nil {
-			http.NotFound(w, r)
-			return
-		}
-		title := m[1]
-		p := &wikiPage{basePage: basePage{Title: title}}
+		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn(nil)}}
 		fn(w, r, p)
 	}
 }
@@ -326,7 +307,7 @@ func loggingHandler(next http.Handler) http.Handler {
 }
 
 func main() {
-	specialDir = []string{"tags"}
+	specialDir = []string{"tags", "pub"}
 	config, err := LoadConfig("config.json")
 	if err != nil {
 		log.Fatal(err)
@@ -368,7 +349,7 @@ func main() {
 
 	fstore := fileStorage{}
 
-	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav)))
+	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav, fstore)))
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
 	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
@@ -378,6 +359,7 @@ func main() {
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav)))
+	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(homeHandler("pubhome", getPubNav, fstore)))
 
 	if config.UseHttps {
 		// Any routes that duplicate the http routing are only done here

@@ -15,11 +15,12 @@ type wikiNav struct {
 	SubNav []wikiNav
 }
 type nav struct {
+	Pages []string
 	Wikis []wikiNav
 	Tags  TagIndex
 }
 
-type navFunc func() nav
+type navFunc func(storage) nav
 
 type byModTime []os.FileInfo
 
@@ -116,7 +117,7 @@ func getWikiList(root, path string) []wikiNav {
 
 }
 
-func getNav() nav {
+func getNav(s storage) nav {
 	return nav{
 		Wikis: getWikiList(wikiDir, wikiDir),
 		Tags:  IndexRawFiles(wikiDir, "PDF", IndexTags(tagDir)),
