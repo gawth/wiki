@@ -35,7 +35,8 @@ func SearchWikis(root string, query string) []string {
 	filepath.Walk(root, func(path string, file os.FileInfo, err error) error {
 		if !file.IsDir() {
 			wg.Add(1)
-			go readFile(&wg, file.Name(), path, query, results)
+			name := strings.TrimSuffix(strings.TrimPrefix(path, root), ".md")
+			go readFile(&wg, name, path, query, results)
 		}
 		return nil
 	})
