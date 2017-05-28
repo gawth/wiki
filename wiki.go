@@ -16,7 +16,7 @@ import (
 
 	"strconv"
 
-	"github.com/golang-commonmark/markdown"
+	"github.com/gawth/markdown"
 	"github.com/justinas/alice"
 )
 
@@ -291,9 +291,9 @@ func processSave(fn func(http.ResponseWriter, *http.Request, string, storage) st
 }
 
 func parseWikiWords(target []byte) []byte {
-	var wikiWord = regexp.MustCompile(`\{\{([^\}]+)\}\}`)
+	var wikiWord = regexp.MustCompile(`\{\{([^\}^#]+)[#]*(.*)\}\}`)
 
-	return wikiWord.ReplaceAll(target, []byte("<a href=\"/wiki/view/$1\">$1</a>"))
+	return wikiWord.ReplaceAll(target, []byte("<a href=\"/wiki/view/$1#$2\">$1</a>"))
 }
 
 func loggingHandler(next http.Handler) http.Handler {
