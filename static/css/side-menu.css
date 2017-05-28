@@ -50,7 +50,7 @@ The content `<div>` is where all your content goes.
 .content {
     margin: 0 auto;
     padding: 0 2em;
-    margin-left: 130px;
+    margin-left: 150px;
     margin-bottom: 50px;
     line-height: 1.4em;
 }
@@ -91,7 +91,7 @@ appears on the left side of the page.
 #menu {
     /* margin-left: -150px; */
     /* "#menu" width */
-    width: 150px;
+    width: 180px;
     position: fixed;
     top: 0;
     left: 0;
@@ -325,6 +325,7 @@ Main Components
 .cd-accordion-menu ul {
     /* by default hide all sub menus */
     display: none;
+    padding-left: 10px;
 }
 
 .cd-accordion-menu li {
