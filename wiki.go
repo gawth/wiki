@@ -16,6 +16,8 @@ import (
 
 	"strconv"
 
+	"bytes"
+
 	"github.com/gawth/markdown"
 	"github.com/justinas/alice"
 )
@@ -23,6 +25,9 @@ import (
 var wikiDir string
 var tagDir string
 var pubDir string
+var ekey []byte
+
+var encryptionFlag = []byte("ENCRYPTED")
 
 var specialDir []string
 
@@ -37,6 +42,7 @@ type wikiPage struct {
 	Created   string
 	Modified  string
 	Published bool
+	Encrypted bool
 	basePage
 }
 type searchPage struct {
@@ -64,8 +70,17 @@ func getWikiPubFilename(name string) string {
 	return pubDir + name
 }
 func (p *wikiPage) save(s storage) error {
+	var err error
 	filename := getWikiFilename(wikiDir, p.Title)
-	err := s.storeFile(filename, []byte(p.Body))
+	body := []byte(p.Body)
+	if p.Encrypted {
+		body, err = encrypt(body, ekey)
+		if err != nil {
+			return err
+		}
+		body = append(encryptionFlag, body...)
+	}
+	err = s.storeFile(filename, body)
 	if err != nil {
 		return err
 	}
@@ -115,6 +130,16 @@ func loadPage(p *wikiPage) (*wikiPage, error) {
 	if err != nil {
 		log.Println(err)
 		return p, err
+	}
+	if bytes.HasPrefix(body, encryptionFlag) {
+		tmp := bytes.TrimPrefix(body, encryptionFlag)
+
+		body, err = decrypt(tmp, ekey)
+		if err != nil {
+			log.Println(err)
+			return p, err
+		}
+		p.Encrypted = true
 	}
 	p.Body = template.HTML(body)
 
@@ -229,6 +254,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 	if r.FormValue("wikipub") == "on" {
 		p.Published = true
 	}
+	if r.FormValue("wikicrypt") == "on" {
+		p.Encrypted = true
+	}
 
 	err := p.save(s)
 	if err != nil {
@@ -334,6 +362,8 @@ func main() {
 	tagDir = wikiDir + "tags/" // Make sure this doesnt double up the / in the path...
 	pubDir = wikiDir + "pub/"  // Make sure this doesnt double up the / in the path...
 
+	ekey = []byte(config.EncryptionKey)
+
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
 
@@ -343,7 +373,7 @@ func main() {
 	httpmux := http.NewServeMux()
 	httpsmux := httpmux
 	// setup wiki on https
-	if config.UseHttps {
+	if config.UseHTTPS {
 		httpsmux = http.NewServeMux()
 	}
 
@@ -361,7 +391,7 @@ func main() {
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav)))
 	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(homeHandler("pubhome", getPubNav, fstore)))
 
-	if config.UseHttps {
+	if config.UseHTTPS {
 		// Any routes that duplicate the http routing are only done here
 		httpsmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 		go http.ListenAndServeTLS(
