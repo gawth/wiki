@@ -401,6 +401,7 @@ func main() {
 			httpsmux)
 
 		httpmux.HandleFunc("/wiki", redirectHandler(*config))
+		httpsmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
 	} else {
 	}
 
