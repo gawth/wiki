@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"os"
+	"strconv"
 )
 
 // Config object loaded from disk at startup
@@ -20,28 +22,48 @@ type Config struct {
 	EncryptionKey string
 }
 
+// getenv returns an env var if it is set or the default passed in
+func getenv(key, fallback string) string {
+	val := os.Getenv(key)
+	if len(val) == 0 {
+		return fallback
+	}
+	return val
+}
+
 // LoadConfig reads in config from file and hydrates to a
 // config object
-func LoadConfig(path string) (*Config, error) {
+func LoadConfig() (*Config, error) {
+	path := "config.son"
 
 	config := Config{}
-	config.HTTPPort = 80
-	config.HTTPSPort = 443
-	config.KeyLocation = "./excluded/"
-	config.UseHTTPS = false
-
-	conf, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
+	config.HTTPPort, _ = strconv.Atoi(getenv("HTTPPORT", "80"))
+	config.HTTPSPort, _ = strconv.Atoi(getenv("HTTPSPORT", "443"))
+	config.KeyLocation = getenv("KEYLOCATION", "./excluded/")
+	config.UseHTTPS, _ = strconv.ParseBool(getenv("USEHTTPS", "false"))
+	config.WikiDir = getenv("WIKIDIR", "wikidir")
+	config.Logfile = getenv("LOGFILE", "wiki.log")
+	config.CookieKey = []byte(getenv("COOKIEKEY", ""))
+	if len(config.CookieKey) == 0 {
+		return nil, errors.New("Must set a valid cookie key")
+	}
+	config.EncryptionKey = getenv("ENCRYPTIONKEY", "")
+	if len(config.EncryptionKey) == 0 {
+		return nil, errors.New("Must set a valid, 32 char Encryption Key")
 	}
 
-	err = json.Unmarshal(conf, &config)
-	if err != nil {
-		return nil, err
+	conf, err := ioutil.ReadFile(path)
+	if err == nil {
+		err = json.Unmarshal(conf, &config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Make sure the path ends with a /
-	config.WikiDir = config.WikiDir + "/"
+	if config.WikiDir[len(config.WikiDir)-1] != '/' {
+		config.WikiDir = config.WikiDir + "/"
+	}
 
 	if len(config.EncryptionKey) != 32 {
 		return nil, errors.New("Need to set EncryptionKey to be 32 char string")

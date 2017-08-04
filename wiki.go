@@ -336,7 +336,7 @@ func loggingHandler(next http.Handler) http.Handler {
 
 func main() {
 	specialDir = []string{"tags", "pub"}
-	config, err := LoadConfig("config.json")
+	config, err := LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
