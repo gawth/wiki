@@ -1,0 +1,48 @@
+{
+	"ImportPath": "github.com/gawth/wiki",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/dgrijalva/jwt-go",
+			"Comment": "v3.0.0-17-g2268707",
+			"Rev": "2268707a8f0843315e2004ee4f1d021dc08baedf"
+		},
+		{
+			"ImportPath": "github.com/gawth/markdown",
+			"Rev": "6cdefa2e8ce38c19ebc0b8c0653753c5c39c3446"
+		},
+		{
+			"ImportPath": "github.com/golang-commonmark/markdown/byteutil",
+			"Rev": "9e199b881116ec8dec80c69b927b43f9482a669d"
+		},
+		{
+			"ImportPath": "github.com/golang-commonmark/markdown/html",
+			"Rev": "9e199b881116ec8dec80c69b927b43f9482a669d"
+		},
+		{
+			"ImportPath": "github.com/golang-commonmark/markdown/linkify",
+			"Rev": "9e199b881116ec8dec80c69b927b43f9482a669d"
+		},
+		{
+			"ImportPath": "github.com/justinas/alice",
+			"Comment": "1.0.0-16-g1051eaf",
+			"Rev": "1051eaf52fcafdd87ead59d28b065f1fcb8274ec"
+		},
+		{
+			"ImportPath": "github.com/opennota/urlesc",
+			"Rev": "5bd2802263f21d8788851d5305584c82a5c75d7e"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/bcrypt",
+			"Rev": "453249f01cfeb54c3d549ddb75ff152ca243f9d8"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/blowfish",
+			"Rev": "453249f01cfeb54c3d549ddb75ff152ca243f9d8"
+		}
+	]
+}
