@@ -100,6 +100,7 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		err := bcrypt.CompareHashAndPassword(user.password, []byte(password))
 		if err != nil {
+			log.Println("Password doesnt match")
 			renderTemplate(w, "login", "Login Failed")
 			return
 		}
@@ -210,7 +211,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // NewAuth - Create a new auth object - reads in user DB as well
 func NewAuth(config Config, fn func(Auth) error) Auth {
-	auth := Auth{secret: config.CookieKey, persist: fn, filepath: config.KeyLocation}
+	auth := Auth{secret: []byte(config.CookieKey), persist: fn, filepath: config.KeyLocation}
 	auth.users = make(map[string]User)
 
 	// Use this to track login attempts...a successful login will reset it
