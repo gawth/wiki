@@ -38,7 +38,7 @@ func LoadConfig() (*Config, error) {
 	path := "config.json"
 
 	config := Config{}
-	config.HTTPPort, _ = strconv.Atoi(getenv("HTTPPORT", "80"))
+	config.HTTPPort, _ = strconv.Atoi(getenv("PORT", "80"))
 	config.HTTPSPort, _ = strconv.Atoi(getenv("HTTPSPORT", "443"))
 	config.KeyLocation = getenv("KEYLOCATION", "./excluded/")
 	config.UseHTTPS, _ = strconv.ParseBool(getenv("USEHTTPS", "false"))
