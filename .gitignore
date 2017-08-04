@@ -6,3 +6,4 @@ excluded
 config.json
 .DS_Store
 *.swp
+.env
