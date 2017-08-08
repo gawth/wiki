@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"html/template"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +13,7 @@ import (
 type storage interface {
 	storeFile(name string, content []byte) error
 	getPublicPages() []string
+	getPage(p *wikiPage) (*wikiPage, error)
 }
 
 type fileStorage struct {
@@ -57,4 +61,56 @@ func indexPubPages(path string) []string {
 
 func (fs fileStorage) getPublicPages() []string {
 	return indexPubPages(pubDir)
+}
+
+func (fs fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
+	filename := getWikiFilename(wikiDir, p.Title)
+
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Println(err)
+		return p, err
+	}
+	defer file.Close()
+
+	body, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Println(err)
+		return p, err
+	}
+	if bytes.HasPrefix(body, encryptionFlag) {
+		tmp := bytes.TrimPrefix(body, encryptionFlag)
+
+		body, err = decrypt(tmp, ekey)
+		if err != nil {
+			log.Println(err)
+			return p, err
+		}
+		p.Encrypted = true
+	}
+	p.Body = template.HTML(body)
+
+	info, err := file.Stat()
+	if err != nil {
+		log.Println(err)
+		return p, err
+	}
+
+	p.Modified = info.ModTime().String()
+
+	tags, err := ioutil.ReadFile(getWikiTagsFilename(p.Title))
+	if err == nil {
+		p.Tags = string(tags)
+		p.TagArray = strings.Split(p.Tags, ",")
+	}
+
+	pubfilename := getWikiPubFilename(p.Title)
+
+	pubfile, err := os.Open(pubfilename)
+	if err == nil {
+		p.Published = true
+		pubfile.Close()
+	}
+
+	return p, nil
 }

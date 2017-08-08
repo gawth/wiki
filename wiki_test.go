@@ -1,6 +1,12 @@
 package main
 
-import "testing"
+import (
+	"html/template"
+	"io/ioutil"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
 
 var ParseData = []struct {
 	source string
@@ -25,5 +31,29 @@ func TestParseQueryResults(t *testing.T) {
 			t.Errorf("ParseQueryResult: Failed to extract text %v: %v", res[0].Text, td.res.Text)
 		}
 
+	}
+}
+
+func TestViewHandler(t *testing.T) {
+	testStr := "This is a test"
+	p := wikiPage{
+		Body: template.HTML(testStr),
+	}
+	s := stubStorage{
+		page: p,
+	}
+
+	req := httptest.NewRequest("GET", "http://localhost/wiki/view", nil)
+	w := httptest.NewRecorder()
+
+	viewHandler(w, req, &p, &s)
+
+	resp := w.Result()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+	if !strings.Contains(string(body), testStr) {
+		t.Errorf("Failed to get %v in %v", testStr, string(body))
 	}
 }

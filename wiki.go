@@ -2,7 +2,6 @@ package main
 
 import (
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
@@ -15,8 +14,6 @@ import (
 	"time"
 
 	"strconv"
-
-	"bytes"
 
 	"github.com/gawth/markdown"
 	"github.com/justinas/alice"
@@ -116,58 +113,6 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	return page, nil
 
 }
-func loadPage(p *wikiPage) (*wikiPage, error) {
-	filename := getWikiFilename(wikiDir, p.Title)
-
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Println(err)
-		return p, err
-	}
-	defer file.Close()
-
-	body, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Println(err)
-		return p, err
-	}
-	if bytes.HasPrefix(body, encryptionFlag) {
-		tmp := bytes.TrimPrefix(body, encryptionFlag)
-
-		body, err = decrypt(tmp, ekey)
-		if err != nil {
-			log.Println(err)
-			return p, err
-		}
-		p.Encrypted = true
-	}
-	p.Body = template.HTML(body)
-
-	info, err := file.Stat()
-	if err != nil {
-		log.Println(err)
-		return p, err
-	}
-
-	p.Modified = info.ModTime().String()
-
-	tags, err := ioutil.ReadFile(getWikiTagsFilename(p.Title))
-	if err == nil {
-		p.Tags = string(tags)
-		p.TagArray = strings.Split(p.Tags, ",")
-	}
-
-	pubfilename := getWikiPubFilename(p.Title)
-
-	pubfile, err := os.Open(pubfilename)
-	if err == nil {
-		p.Published = true
-		pubfile.Close()
-	}
-
-	return p, nil
-}
-
 func checkForPDF(p *wikiPage) (*wikiPage, error) {
 	filename := getPDFFilename(wikiDir, p.Title)
 
@@ -182,8 +127,8 @@ func checkForPDF(p *wikiPage) (*wikiPage, error) {
 	return p, nil
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
-	p, err := convertMarkdown(loadPage(p))
+func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
+	p, err := convertMarkdown(s.getPage(p))
 	if err != nil {
 		p, err = checkForPDF(p)
 		if err != nil {
@@ -197,12 +142,12 @@ func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
 	renderTemplate(w, "view", p)
 }
 
-func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
-	p, _ = loadPage(p)
+func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
+	p, _ = s.getPage(p)
 	renderTemplate(w, "edit", p)
 }
 
-func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
+func searchHandler(fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		term := r.URL.Query().Get("term") // Get the search term
 		if len(term) == 0 {
@@ -211,7 +156,7 @@ func searchHandler(fn navFunc) func(http.ResponseWriter, *http.Request) {
 		}
 
 		results := ParseQueryResults(SearchWikis(wikiDir, term))
-		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn(nil)}}
+		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn(s)}}
 
 		renderTemplate(w, "search", p)
 	}
@@ -289,7 +234,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 
 var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ /]*)$")
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
+func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
 		if len(wword) == 0 {
@@ -301,8 +246,8 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn n
 			}
 			wword = m[2]
 		}
-		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn(nil)}}
-		fn(w, r, p)
+		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn(s)}}
+		fn(w, r, p, s)
 	}
 }
 
@@ -383,12 +328,12 @@ func main() {
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
 	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
-	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav)))
-	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav)))
-	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav)))
+	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav, fstore)))
+	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav, fstore)))
+	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav, fstore)))
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
-	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav)))
+	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav, fstore)))
 	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(homeHandler("pubhome", getPubNav, fstore)))
 
 	if config.UseHTTPS {

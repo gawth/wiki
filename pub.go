@@ -9,7 +9,7 @@ import (
 
 var validPubPath = regexp.MustCompile("^/pub/([a-zA-Z0-9\\.\\-_ /]*)$")
 
-func makePubHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navfn navFunc) http.HandlerFunc {
+func makePubHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Path is : %v", r.URL.Path)
 		m := validPubPath.FindStringSubmatch(r.URL.Path)
@@ -19,11 +19,11 @@ func makePubHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage), navf
 		}
 		title := m[1]
 		p := &wikiPage{basePage: basePage{Title: title}}
-		fn(w, r, p)
+		fn(w, r, p, s)
 	}
 }
-func pubHandler(w http.ResponseWriter, r *http.Request, p *wikiPage) {
-	p, err := convertMarkdown(loadPage(p))
+func pubHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
+	p, err := convertMarkdown(s.getPage(p))
 	if err != nil {
 	} else {
 		p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
