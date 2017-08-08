@@ -1,7 +1,8 @@
 package main
 
 type stubStorage struct {
-	page wikiPage
+	page        wikiPage
+	expectederr error
 }
 
 func (ss *stubStorage) storeFile(name string, content []byte) error {
@@ -13,5 +14,5 @@ func (ss *stubStorage) getPublicPages() []string {
 }
 
 func (ss *stubStorage) getPage(p *wikiPage) (*wikiPage, error) {
-	return &ss.page, nil
+	return &ss.page, ss.expectederr
 }

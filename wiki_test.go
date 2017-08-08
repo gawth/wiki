@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"html/template"
 	"io/ioutil"
 	"net/http/httptest"
@@ -43,7 +44,7 @@ func TestViewHandler(t *testing.T) {
 		page: p,
 	}
 
-	req := httptest.NewRequest("GET", "http://localhost/wiki/view", nil)
+	req := httptest.NewRequest("GET", "http://localhost/wiki/view/test", nil)
 	w := httptest.NewRecorder()
 
 	viewHandler(w, req, &p, &s)
@@ -55,5 +56,23 @@ func TestViewHandler(t *testing.T) {
 	}
 	if !strings.Contains(string(body), testStr) {
 		t.Errorf("Failed to get %v in %v", testStr, string(body))
+	}
+}
+
+func TestViewRedirect(t *testing.T) {
+	p := wikiPage{basePage: basePage{Title: "Test Title"}}
+	s := stubStorage{
+		page:        p,
+		expectederr: errors.New("Page not found"),
+	}
+
+	req := httptest.NewRequest("GET", "http://localhost/wiki/view/test", nil)
+	w := httptest.NewRecorder()
+
+	viewHandler(w, req, &p, &s)
+
+	resp := w.Result()
+	if resp.StatusCode != 302 {
+		t.Errorf("No redirect, expected 302 but got %v", resp.StatusCode)
 	}
 }
