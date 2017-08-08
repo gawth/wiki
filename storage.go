@@ -8,12 +8,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 type storage interface {
 	storeFile(name string, content []byte) error
 	getPublicPages() []string
 	getPage(p *wikiPage) (*wikiPage, error)
+	searchPages(root, query string) []string
 }
 
 type fileStorage struct {
@@ -113,4 +115,28 @@ func (fs fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	}
 
 	return p, nil
+}
+
+func (fs fileStorage) searchPages(root string, query string) []string {
+	var wg sync.WaitGroup
+	results := make(chan string)
+
+	filepath.Walk(root, func(path string, file os.FileInfo, err error) error {
+		if !file.IsDir() {
+			wg.Add(1)
+			name := strings.TrimSuffix(strings.TrimPrefix(path, root), ".md")
+			go readFile(&wg, name, path, query, results)
+		}
+		return nil
+	})
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	hits := []string{}
+	for res := range results {
+		hits = append(hits, res)
+	}
+	return hits
 }

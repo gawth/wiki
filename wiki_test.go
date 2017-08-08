@@ -76,3 +76,22 @@ func TestViewRedirect(t *testing.T) {
 		t.Errorf("No redirect, expected 302 but got %v", resp.StatusCode)
 	}
 }
+
+func stubNavFunc(s storage) nav {
+	return nav{}
+}
+
+func TestSearchHandler(t *testing.T) {
+	s := stubStorage{}
+	req := httptest.NewRequest("GET", "http://localhost/wiki/search?term=test", nil)
+	w := httptest.NewRecorder()
+
+	handler := makeSearchHandler(stubNavFunc, &s)
+	handler(w, req)
+
+	resp := w.Result()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+}

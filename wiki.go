@@ -147,7 +147,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	renderTemplate(w, "edit", p)
 }
 
-func searchHandler(fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
+func makeSearchHandler(fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		term := r.URL.Query().Get("term") // Get the search term
 		if len(term) == 0 {
@@ -155,7 +155,7 @@ func searchHandler(fn navFunc, s storage) func(http.ResponseWriter, *http.Reques
 			return
 		}
 
-		results := ParseQueryResults(SearchWikis(wikiDir, term))
+		results := ParseQueryResults(s.searchPages(wikiDir, term))
 		p := &searchPage{Results: results, basePage: basePage{Title: "Search", Nav: fn(s)}}
 
 		renderTemplate(w, "search", p)
@@ -328,7 +328,7 @@ func main() {
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
 	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
-	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(searchHandler(getNav, fstore)))
+	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(makeSearchHandler(getNav, fstore)))
 	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav, fstore)))
 	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav, fstore)))
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))

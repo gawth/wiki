@@ -16,3 +16,7 @@ func (ss *stubStorage) getPublicPages() []string {
 func (ss *stubStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	return &ss.page, ss.expectederr
 }
+
+func (ss *stubStorage) searchPages(root, query string) []string {
+	return []string{}
+}
