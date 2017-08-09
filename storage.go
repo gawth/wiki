@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"html/template"
@@ -18,6 +19,8 @@ type storage interface {
 	getPage(p *wikiPage) (*wikiPage, error)
 	searchPages(root, query string) []string
 	checkForPDF(p *wikiPage) (*wikiPage, error)
+	IndexTags(path string) TagIndex
+	IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex
 }
 
 type fileStorage struct {
@@ -142,6 +145,23 @@ func (fs fileStorage) searchPages(root string, query string) []string {
 	}
 	return hits
 }
+func readFile(wg *sync.WaitGroup, name string, path string, query string, results chan string) {
+	defer wg.Done()
+
+	file, err := os.Open(path)
+	defer file.Close()
+
+	if err != nil {
+		return
+	}
+	scanner := bufio.NewScanner(file)
+	for i := 1; scanner.Scan(); i++ {
+		if strings.Contains(scanner.Text(), query) {
+			match := fmt.Sprintf("%s\t%d\t%s\n", name, i, scanner.Text())
+			results <- match
+		}
+	}
+}
 
 func (fs fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 	filename := getPDFFilename(wikiDir, p.Title)
@@ -155,4 +175,45 @@ func (fs fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 
 	p.Body = template.HTML(fmt.Sprintf("<a href=\"/wiki/raw/%v\">%v</a>", p.Title, p.Title))
 	return p, nil
+}
+
+// IndexTags reads tags files from the file system and constructs
+// an index
+func (fs fileStorage) IndexTags(path string) TagIndex {
+	index := TagIndex(make(map[string]Tag))
+
+	log.Println("Tag base folder :" + path)
+
+	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
+		// log.Println("walk:" + subpath)
+		if !info.IsDir() {
+			contents, err := ioutil.ReadFile(subpath)
+			checkErr(err)
+
+			wikiName := strings.TrimPrefix(subpath, path)
+			for _, t := range GetTagsFromString(string(contents)) {
+				index.AssociateTagToWiki(wikiName, t)
+			}
+		}
+		return nil
+	})
+	checkErr(err)
+
+	return index
+}
+
+// IndexRawFiles adds in tags for a file extension tag
+func (fs fileStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
+
+	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
+		if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(fileExtension)) {
+			filename := strings.TrimPrefix(subpath, path)
+			existing.AssociateTagToWiki(filename, fileExtension)
+		}
+		return nil
+	})
+	checkErr(err)
+
+	return existing
+
 }

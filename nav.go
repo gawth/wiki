@@ -120,6 +120,6 @@ func getWikiList(root, path string) []wikiNav {
 func getNav(s storage) nav {
 	return nav{
 		Wikis: getWikiList(wikiDir, wikiDir),
-		Tags:  IndexRawFiles(wikiDir, "PDF", IndexTags(tagDir)),
+		Tags:  s.IndexRawFiles(wikiDir, "PDF", s.IndexTags(tagDir)),
 	}
 }

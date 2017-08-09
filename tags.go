@@ -1,12 +1,6 @@
 package main
 
-import (
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-)
+import "strings"
 
 // Tag used to store a tag and associated wiki titles
 type Tag struct {
@@ -50,45 +44,4 @@ func (t TagIndex) AssociateTagToWiki(wiki, tag string) {
 // GetTag returns the Tag from the tag index
 func (t TagIndex) GetTag(tag string) Tag {
 	return t[tag]
-}
-
-// IndexTags reads tags files from the file system and constructs
-// an index
-func IndexTags(path string) TagIndex {
-	index := TagIndex(make(map[string]Tag))
-
-	log.Println("Tag base folder :" + path)
-
-	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
-		// log.Println("walk:" + subpath)
-		if !info.IsDir() {
-			contents, err := ioutil.ReadFile(subpath)
-			checkErr(err)
-
-			wikiName := strings.TrimPrefix(subpath, path)
-			for _, t := range GetTagsFromString(string(contents)) {
-				index.AssociateTagToWiki(wikiName, t)
-			}
-		}
-		return nil
-	})
-	checkErr(err)
-
-	return index
-}
-
-// IndexRawFiles adds in tags for a file extension tag
-func IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
-
-	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
-		if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(fileExtension)) {
-			filename := strings.TrimPrefix(subpath, path)
-			existing.AssociateTagToWiki(filename, fileExtension)
-		}
-		return nil
-	})
-	checkErr(err)
-
-	return existing
-
 }
