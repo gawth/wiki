@@ -8,7 +8,6 @@ import (
 
 	"log"
 
-	"fmt"
 	"strings"
 
 	"time"
@@ -113,24 +112,10 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	return page, nil
 
 }
-func checkForPDF(p *wikiPage) (*wikiPage, error) {
-	filename := getPDFFilename(wikiDir, p.Title)
-
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Printf("Failed to open %v, %v\n", p.Title, err.Error())
-		return p, err
-	}
-	defer file.Close()
-
-	p.Body = template.HTML(fmt.Sprintf("<a href=\"/wiki/raw/%v\">%v</a>", p.Title, p.Title))
-	return p, nil
-}
-
 func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 	p, err := convertMarkdown(s.getPage(p))
 	if err != nil {
-		p, err = checkForPDF(p)
+		p, err = s.checkForPDF(p)
 		if err != nil {
 			http.Redirect(w, r, "/wiki/edit/"+p.Title, http.StatusFound)
 			return

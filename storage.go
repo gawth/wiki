@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -16,6 +17,7 @@ type storage interface {
 	getPublicPages() []string
 	getPage(p *wikiPage) (*wikiPage, error)
 	searchPages(root, query string) []string
+	checkForPDF(p *wikiPage) (*wikiPage, error)
 }
 
 type fileStorage struct {
@@ -139,4 +141,18 @@ func (fs fileStorage) searchPages(root string, query string) []string {
 		hits = append(hits, res)
 	}
 	return hits
+}
+
+func (fs fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
+	filename := getPDFFilename(wikiDir, p.Title)
+
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Printf("Failed to open %v, %v\n", p.Title, err.Error())
+		return p, err
+	}
+	defer file.Close()
+
+	p.Body = template.HTML(fmt.Sprintf("<a href=\"/wiki/raw/%v\">%v</a>", p.Title, p.Title))
+	return p, nil
 }

@@ -20,3 +20,7 @@ func (ss *stubStorage) getPage(p *wikiPage) (*wikiPage, error) {
 func (ss *stubStorage) searchPages(root, query string) []string {
 	return []string{}
 }
+
+func (ss *stubStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
+	return &ss.page, ss.expectederr
+}
