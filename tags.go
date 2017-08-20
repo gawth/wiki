@@ -21,6 +21,12 @@ func (t *Tag) AddWiki(wiki string) {
 // GetTagsFromString takes a string of comma separated tags and converts to
 // a slice of tag structs
 func GetTagsFromString(tagstring string) []string {
+	// Calling split on empty seems to give you a slice with an empty string
+	// so need to manually check before going ahead with the split and return a
+	// empty slice
+	if tagstring == "" {
+		return []string{}
+	}
 	tagnames := strings.Split(tagstring, ",")
 
 	return tagnames

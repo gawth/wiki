@@ -186,7 +186,7 @@ func (fs fileStorage) IndexTags(path string) TagIndex {
 
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
 		// log.Println("walk:" + subpath)
-		if !info.IsDir() {
+		if !info.IsDir() && !strings.HasPrefix(info.Name(), ".") {
 			contents, err := ioutil.ReadFile(subpath)
 			checkErr(err)
 
