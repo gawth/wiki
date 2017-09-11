@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 
@@ -43,14 +45,14 @@ func (s s3Storage) listFiles() (*s3.ListObjectsOutput, error) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchBucket:
-				fmt.Println(s3.ErrCodeNoSuchBucket, aerr.Error())
+				log.Println(s3.ErrCodeNoSuchBucket, aerr.Error())
 			default:
-				fmt.Println(aerr.Error())
+				log.Println(aerr.Error())
 			}
 		} else {
 			// Print the error, cast err to awserr.Error to get the Code and
 			// Message from an error.
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		}
 		return nil, err
 	}
@@ -69,14 +71,14 @@ func (s s3Storage) getFile(key string) (*s3.GetObjectOutput, error) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				fmt.Println(s3.ErrCodeNoSuchKey, aerr.Error())
+				log.Println(s3.ErrCodeNoSuchKey, aerr.Error())
 			default:
-				fmt.Println(aerr.Error())
+				log.Println(aerr.Error())
 			}
 		} else {
 			// Print the error, cast err to awserr.Error to get the Code and
 			// Message from an error.
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		}
 		return nil, err
 	}
@@ -125,4 +127,36 @@ func (s s3Storage) getPage(p *wikiPage) (*wikiPage, error) {
 	}
 
 	return p, nil
+}
+
+func (s s3Storage) searchPages(root, query string) []string {
+	res := []string{}
+	// Get a list of files
+	files, err := s.listFiles()
+	if err != nil {
+		// Log the error
+		log.Println(err.Error())
+		return res
+	}
+
+	for _, v := range files.Contents {
+		log.Println(v.Key)
+
+		file, err := s.getFile(*v.Key)
+		if err != nil {
+			// Log the error
+			log.Println(err.Error())
+			return res
+		}
+		// Get the body of the file
+		scanner := bufio.NewScanner(file.Body)
+		for i := 1; scanner.Scan(); i++ {
+			if strings.Contains(scanner.Text(), query) {
+				match := fmt.Sprintf("%s\t%d\t%s\n", *v.Key, i, scanner.Text())
+				res = append(res, match)
+			}
+		}
+
+	}
+	return res
 }

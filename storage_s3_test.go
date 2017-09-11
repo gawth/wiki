@@ -9,7 +9,7 @@ func TestS3(t *testing.T) {
 	target := newS3Store("wiki-76635528265")
 	filename := "folder/testfile"
 	mdfilename := filename + ".md"
-	testdata := "This is some data"
+	testdata := "This is some data2"
 
 	err := target.storeFile(mdfilename, []byte(testdata))
 	if err != nil {
@@ -52,6 +52,17 @@ func TestS3(t *testing.T) {
 	_, err = target.getPage(&page)
 	if err != nil {
 		t.Errorf("Failed to read page :%v", err)
+	}
+
+	searchTerm := "fred"
+	searchRes := target.searchPages("", searchTerm)
+	if len(searchRes) != 0 {
+		t.Errorf("Search - incorrect match for :%v, in %v", searchTerm, searchRes)
+	}
+	searchTerm = testdata
+	searchRes = target.searchPages("", searchTerm)
+	if len(searchRes) != 1 {
+		t.Errorf("Search - failed to find  one match of :%v in %v", searchTerm, searchRes)
 	}
 
 }
