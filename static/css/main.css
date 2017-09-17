@@ -1,6 +1,7 @@
 .wikiBody {
-    background: aliceblue;
+    background: #fff;
     padding: 5px;
+    text-align: justify;
 }
 
 .wikitag {
