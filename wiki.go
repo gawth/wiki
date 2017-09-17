@@ -14,8 +14,8 @@ import (
 
 	"strconv"
 
-	"github.com/gawth/markdown"
 	"github.com/justinas/alice"
+	"github.com/russross/blackfriday"
 )
 
 var wikiDir string
@@ -107,8 +107,7 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	if err != nil {
 		return page, err
 	}
-	md := markdown.New(markdown.HTML(true))
-	page.Body = template.HTML(md.RenderToString([]byte(page.Body)))
+	page.Body = template.HTML(blackfriday.MarkdownCommon([]byte(page.Body)))
 	return page, nil
 
 }
