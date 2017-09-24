@@ -2,6 +2,7 @@
     background: #fff;
     padding: 5px;
     text-align: justify;
+    font-family: Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif;
 }
 
 .wikitag {
@@ -55,28 +56,30 @@ td {
     color: #d45252;
 }
 
-p {
-    font: 0.9em Arial, Geneva, Helvetica, sans-serif;
-}
+p {}
 
 li {
-    font: 0.9em Arial, Geneva, Helvetica, sans-serif;
+    font-size: 0.9em;
 }
 
 th {
-    font: bold 1.0em Arial, Geneva, Helvetica, sans-serif;
+    font-size: 1.0em;
+    font-weight: bold;
 }
 
 h1 {
-    font: bold 1.3em Arial, Geneva, Helvetica, sans-serif;
+    font-size: 1.3em;
+    font-weight: bold;
 }
 
 h2 {
-    font: bold 1.2em Arial, Geneva, Helvetica, sans-serif;
+    font-size: 1.2em;
+    font-weight: bold;
 }
 
 h3 {
-    font: bold 1.1em Arial, Geneva, Helvetica, sans-serif;
+    font-size: 1.1em;
+    font-weight: bold;
 }
 
 blockquote {
