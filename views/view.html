@@ -10,7 +10,7 @@
         <section>
             <a id="top-edit" class="pure-button pure-button-primary" href="/wiki/edit/{{.Title}}">edit</a>
             <p>
-                <div class="wikiBody">{{.Body}}</div>
+                <div class="wikiBody" ondblclick="window.location.href='/wiki/edit/{{.Title}}'">{{.Body}}</div>
             </p>
             <p> Modified {{.Modified}}</p>
 
