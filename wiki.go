@@ -14,8 +14,8 @@ import (
 
 	"strconv"
 
-	"github.com/justinas/alice"
-	"github.com/russross/blackfriday"
+	"github.com/justinas/alice"       // Middleware chaining
+	"github.com/russross/blackfriday" // Markdown lib
 )
 
 var wikiDir string
@@ -341,6 +341,7 @@ func main() {
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav, fstore)))
 	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(homeHandler("pubhome", getPubNav, fstore)))
+	httpsmux.Handle("/api", authHandlers.ThenFunc(apiHandler(innerAPIHandler, fstore)))
 
 	if config.UseHTTPS {
 		// Any routes that duplicate the http routing are only done here
