@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
 
 type wikiNav struct {
 	Name   string
 	IsDir  bool
 	SubNav []wikiNav
+	Mod    time.Time
 }
 type nav struct {
 	Pages []string
@@ -22,11 +24,11 @@ type nav struct {
 
 type navFunc func(storage) nav
 
-type byModTime []os.FileInfo
+type byModTime []wikiNav
 
 func (m byModTime) Len() int           { return len(m) }
 func (m byModTime) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
-func (m byModTime) Less(i, j int) bool { return m[i].ModTime().Before(m[j].ModTime()) }
+func (m byModTime) Less(i, j int) bool { return m[i].Mod.Before(m[j].Mod) }
 
 func contains(target string, in []string) bool {
 	for _, d := range in {
@@ -83,8 +85,6 @@ func getWikiList(root, path string) []wikiNav {
 	files, err := ioutil.ReadDir(path)
 	checkErr(err)
 
-	sort.Sort(sort.Reverse(byModTime(files)))
-
 	var names []wikiNav
 	for _, info := range files {
 		if info.IsDir() && contains(info.Name(), specialDir) {
@@ -94,12 +94,14 @@ func getWikiList(root, path string) []wikiNav {
 		if strings.HasSuffix(info.Name(), ".md") {
 			tmp := wikiNav{
 				Name: strings.TrimSuffix(info.Name(), ".md"),
+				Mod:  info.ModTime(),
 			}
 			names = append(names, tmp)
 		}
 		if strings.HasSuffix(info.Name(), ".pdf") {
 			tmp := wikiNav{
 				Name: info.Name(),
+				Mod:  info.ModTime(),
 			}
 			names = append(names, tmp)
 		}
@@ -109,10 +111,15 @@ func getWikiList(root, path string) []wikiNav {
 				IsDir: true,
 			}
 			tmp.SubNav = getWikiList(root, path+"/"+info.Name())
+			if len(tmp.SubNav) > 0 {
+				// Override the dir's mod time with the first entry
+				tmp.Mod = tmp.SubNav[0].Mod
+			}
 			names = append(names, tmp)
 		}
 	}
 
+	sort.Sort(sort.Reverse(byModTime(names)))
 	return names
 
 }
