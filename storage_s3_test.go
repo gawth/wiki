@@ -1,3 +1,5 @@
+// +build s3
+
 package main
 
 import (
