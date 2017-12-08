@@ -1,8 +1,9 @@
 package main
 
 type stubStorage struct {
-	page        wikiPage
-	expectederr error
+	page            wikiPage
+	expectederr     error
+	GetTagWikisFunc func(string) Tag
 }
 
 func (ss *stubStorage) storeFile(name string, content []byte) error {
@@ -29,4 +30,7 @@ func (ss *stubStorage) IndexTags(path string) TagIndex {
 }
 func (ss *stubStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
 	return nil
+}
+func (ss *stubStorage) GetTagWikis(tag string) Tag {
+	return ss.GetTagWikisFunc(tag)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -20,5 +21,10 @@ func innerAPIHandler(w http.ResponseWriter, r *http.Request, s storage) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	data := s.GetTagWikis(tag)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(data)
 
 }

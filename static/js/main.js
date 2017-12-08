@@ -4,18 +4,19 @@ console.log($.support);
 $(document).ready(function() {
     console.log('ready!');
 
-    $(".tag").click(function() {
-        var jqxhr = $.get("/api", function() {
-                alert("success");
+    $(".tag-label").click(function(event) {
+        console.log("Event " + event.target.textContent);
+        var jqxhr = $.getJSON("/api?tag=" + event.target.textContent, function() {
+                console.log("success");
             })
-            .done(function() {
-                alert("second success");
+            .done(function(data) {
+                console.log("second success:" + data);
             })
             .fail(function() {
-                alert("error");
+                console.log("error");
             })
             .always(function() {
-                alert("finished");
+                console.log("finished");
             });
     });
 });

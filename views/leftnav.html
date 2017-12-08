@@ -29,7 +29,7 @@
         {{range $key, $value := .Tags}}
         <li class="has-children">
             <input class="tag" type="checkbox" name="sub-group-{{$key}}" id="sub-group-{{$key}}">
-            <label for="sub-group-{{$key}}">{{$key}}</label>
+            <label class="tag-label" for="sub-group-{{$key}}">{{$key}}</label>
             <!-- -->
             <ul class="">
                 {{range $value.Wikis}}

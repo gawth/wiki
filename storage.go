@@ -20,10 +20,12 @@ type storage interface {
 	searchPages(root, query string) []string
 	checkForPDF(p *wikiPage) (*wikiPage, error)
 	IndexTags(path string) TagIndex
+	GetTagWikis(tag string) Tag
 	IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex
 }
 
 type fileStorage struct {
+	TagDir string
 }
 
 func createDir(filename string) error {
@@ -200,6 +202,10 @@ func (fs fileStorage) IndexTags(path string) TagIndex {
 	checkErr(err)
 
 	return index
+}
+func (fs fileStorage) GetTagWikis(tag string) Tag {
+	ti := fs.IndexTags(fs.TagDir)
+	return ti[tag]
 }
 
 // IndexRawFiles adds in tags for a file extension tag

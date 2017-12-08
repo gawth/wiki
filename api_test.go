@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -11,14 +12,30 @@ func TestApiHandler(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://localhost/api?tag=fred", nil)
 	w := httptest.NewRecorder()
-	s := stubStorage{}
+	s := stubStorage{
+		GetTagWikisFunc: func(tag string) Tag {
+			return Tag{TagName: "fred"}
+		},
+	}
 
 	innerAPIHandler(w, req, &s)
 
 	resp := w.Result()
-	ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Failed to read response,  error: %v", err.Error())
+	}
 	if resp.StatusCode != 200 {
 		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+
+	var results Tag
+	err = json.Unmarshal(data, &results)
+	if err != nil {
+		t.Errorf("Failed to read json data, error: %v, data: '%v'", err.Error(), string(data))
+	}
+	if results.TagName != "fred" {
+		t.Errorf("Got the wrong tag back, expected 'fred' but got '%v'", results.TagName)
 	}
 }
 

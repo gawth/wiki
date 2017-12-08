@@ -328,7 +328,7 @@ func main() {
 		httpsmux = http.NewServeMux()
 	}
 
-	fstore := fileStorage{}
+	fstore := fileStorage{tagDir}
 
 	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav, fstore)))
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
@@ -341,7 +341,7 @@ func main() {
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav, fstore)))
 	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(homeHandler("pubhome", getPubNav, fstore)))
-	httpsmux.Handle("/api", authHandlers.ThenFunc(apiHandler(innerAPIHandler, fstore)))
+	httpsmux.Handle("/api", noauthHandlers.ThenFunc(apiHandler(innerAPIHandler, fstore)))
 
 	if config.UseHTTPS {
 		// Any routes that duplicate the http routing are only done here
