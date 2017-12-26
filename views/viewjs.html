@@ -1,19 +1,20 @@
-{{template "header" "viewjs"}}
+{{template "header" .Title}}
 
 <body>
-    {{template "leftnav" .}}
+    {{template "leftnav" .Nav}}
 
-	<script type="module" src="/static/js/app.js"></script>
 
     <div class="content">
 
         <section>
 			<div id="app">
-				  ${ message }
+				  ${ mainmsg }
+				  <main-wiki-content></main-wiki-content>
 			</div>
         </section>
         {{template "footer"}}
     </div>
+	<script type="module" src="/static/js/app.js"></script>
 </body>
 
 </html>
