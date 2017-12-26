@@ -19,6 +19,12 @@ var app = new Vue({
 				.catch(e => {
 					this.errors.push(e)
 				})
+		},
+		setwiki(msg) {
+			var title, body;
+			[title, body] = msg;
+			console.log("Setting wiki : " + title + " to : " + body);
+			this.wikimd = body;
 		}
 	}
 });

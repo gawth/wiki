@@ -8,7 +8,7 @@
 
         <section>
 			<div id="app">
-				  <main-wiki-content @getwiki="getwiki($event)"  title="{{.Title}}" :wikimd="wikimd"></main-wiki-content>
+				  <main-wiki-content @getwiki="getwiki($event)" @setwiki="setwiki($event)" title="{{.Title}}" :wikimd="wikimd"></main-wiki-content>
 			</div>
         </section>
         {{template "footer"}}
