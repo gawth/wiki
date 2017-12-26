@@ -1,0 +1,19 @@
+{{template "header" "viewjs"}}
+
+<body>
+    {{template "leftnav" .}}
+
+	<script type="module" src="/static/js/app.js"></script>
+
+    <div class="content">
+
+        <section>
+			<div id="app">
+				  ${ message }
+			</div>
+        </section>
+        {{template "footer"}}
+    </div>
+</body>
+
+</html>

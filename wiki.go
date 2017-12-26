@@ -104,7 +104,7 @@ func (p *wikiPage) save(s storage) error {
 }
 
 const (
-	myHtmlFlags = 0 |
+	myHTMLFlags = 0 |
 		blackfriday.HTML_USE_XHTML |
 		blackfriday.HTML_USE_SMARTYPANTS |
 		blackfriday.HTML_SMARTYPANTS_FRACTIONS |
@@ -128,7 +128,7 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	if err != nil {
 		return page, err
 	}
-	mdRender := blackfriday.HtmlRenderer(myHtmlFlags, "", "")
+	mdRender := blackfriday.HtmlRenderer(myHTMLFlags, "", "")
 	page.Body = template.HTML(blackfriday.Markdown([]byte(page.Body), mdRender, myExtensions))
 	return page, nil
 
@@ -191,7 +191,7 @@ func redirectHandler(c Config) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func homeHandler(page string, fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
+func simpleHandler(page string, fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		renderTemplate(w, page, fn(s))
 	}
@@ -222,6 +222,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
+	"views/viewjs.html",
 	"views/pub.html",
 	"views/pubhome.html",
 	"views/login.html",
@@ -330,17 +331,18 @@ func main() {
 
 	fstore := fileStorage{tagDir}
 
-	httpsmux.Handle("/wiki", authHandlers.ThenFunc(homeHandler("home", getNav, fstore)))
+	httpsmux.Handle("/wiki", authHandlers.ThenFunc(simpleHandler("home", getNav, fstore)))
 	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
 	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
 	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(makeSearchHandler(getNav, fstore)))
 	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav, fstore)))
+	httpsmux.Handle("/wiki/viewjs/", authHandlers.ThenFunc(simpleHandler("viewjs", getNav, fstore)))
 	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav, fstore)))
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav, fstore)))
-	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(homeHandler("pubhome", getPubNav, fstore)))
+	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(simpleHandler("pubhome", getPubNav, fstore)))
 	httpsmux.Handle("/api", noauthHandlers.ThenFunc(apiHandler(innerAPIHandler, fstore)))
 
 	if config.UseHTTPS {
