@@ -7,7 +7,19 @@ var app = new Vue({
 		MainWikiContent
 	},
 	data: {
-		  mainmsg: 'Hello Vue!'
+		wikimd: '# This is a title'
+	},
+	methods: {
+		getwiki(wiki) {
+			console.log('Getting data for : ' + wiki);
+			axios.get('/api?wiki=' + wiki)
+				.then(response => {
+					this.wikimd = response.data.Body;
+				})
+				.catch(e => {
+					this.errors.push(e)
+				})
 		}
+	}
 });
 

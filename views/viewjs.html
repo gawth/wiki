@@ -8,12 +8,13 @@
 
         <section>
 			<div id="app">
-				  ${ mainmsg }
-				  <main-wiki-content></main-wiki-content>
+				  <main-wiki-content @getwiki="getwiki($event)"  title="{{.Title}}" :wikimd="wikimd"></main-wiki-content>
 			</div>
         </section>
         {{template "footer"}}
     </div>
+	<script src="https://unpkg.com/marked@0.3.6"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<script type="module" src="/static/js/app.js"></script>
 </body>
 

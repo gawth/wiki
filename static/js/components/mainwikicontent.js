@@ -1,14 +1,25 @@
 var markup = `
 	<div> 
-		<h1>Single-file JavaScript Component</h1> 
-		{{ msg }}
+		<h1>{{title}}</h1> 
+		<div v-html="compiledMarkdown"></div>
 	 </div> 
 `
 export default {
 	template: markup,
+	props: [
+		'title',
+		'wikimd'
+	],
 	data() {
-		return {
-			msg: 'Oh hai from the component' 
+		return {input: '# Main Title'}
+	},
+	computed: {
+		compiledMarkdown: function() {
+			return marked(this.wikimd)
 		}
+	},
+	mounted: function() {
+		console.log('Mounted called on ' + this.title);
+		this.$emit('getwiki', this.title);
 	}
 }

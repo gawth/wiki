@@ -16,15 +16,26 @@ func innerAPIHandler(w http.ResponseWriter, r *http.Request, s storage) {
 
 	tag := r.URL.Query().Get("tag") // Get the tag
 	// Just return an empty response if no tag found
-	if tag == "" {
-		//json.NewEncoder(w).Encode(nil)
-		w.WriteHeader(http.StatusBadRequest)
+	if tag != "" {
+		data := s.GetTagWikis(tag)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(data)
 		return
 	}
+	wiki := r.URL.Query().Get("wiki") // Get the wiki
+	if wiki != "" {
+		wikipg := &wikiPage{basePage: basePage{Title: wiki}}
+		wikipg, err := s.getPage(wikipg)
+		if err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(wikipg)
+			return
+		}
+		// dont insert code here unless you want to exe in the error case
+	}
 
-	data := s.GetTagWikis(tag)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(data)
-
+	w.WriteHeader(http.StatusBadRequest)
+	return
 }
