@@ -52,3 +52,37 @@ func TestApiHandlerNoTag(t *testing.T) {
 		t.Errorf("Failed to get a %v response, got %v", http.StatusBadRequest, resp.StatusCode)
 	}
 }
+
+func TestWikiApiHandler(t *testing.T) {
+
+	req := httptest.NewRequest("GET", "http://localhost/api?wiki=fred", nil)
+	w := httptest.NewRecorder()
+	s := stubStorage{
+		getPageFunc: func(pg *wikiPage) (*wikiPage, error) {
+			return pg, nil
+		},
+		GetTagWikisFunc: func(tag string) Tag {
+			return Tag{TagName: "fred"}
+		},
+	}
+
+	innerAPIHandler(w, req, &s)
+
+	resp := w.Result()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Failed to read response,  error: %v", err.Error())
+	}
+	if resp.StatusCode != 200 {
+		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+
+	var results wikiPage
+	err = json.Unmarshal(data, &results)
+	if err != nil {
+		t.Errorf("Failed to read json data, error: %v, data: '%v'", err.Error(), string(data))
+	}
+	if results.Title != "fred" {
+		t.Errorf("Got the wrong page back, expected 'fred' but got '%v'", results.Title)
+	}
+}

@@ -17,6 +17,7 @@ var app = new Vue({
 					this.wikimd = response.data.Body;
 				})
 				.catch(e => {
+					console.log("ERROR: " + e);
 					this.errors.push(e)
 				})
 		},
@@ -24,7 +25,15 @@ var app = new Vue({
 			var title, body;
 			[title, body] = msg;
 			console.log("Setting wiki : " + title + " to : " + body);
-			this.wikimd = body;
+			axios.post('/api?wiki=' + title, body)
+				.then(response => {
+					console.log("Saved :-)")
+					this.wikimd = body;
+				})
+				.catch(e => {
+					console.log("ERROR: " + e);
+					this.errors.push(e)
+				})
 		}
 	}
 });

@@ -4,6 +4,7 @@ type stubStorage struct {
 	page            wikiPage
 	expectederr     error
 	GetTagWikisFunc func(string) Tag
+	getPageFunc     func(*wikiPage) (*wikiPage, error)
 }
 
 func (ss *stubStorage) storeFile(name string, content []byte) error {
@@ -15,7 +16,7 @@ func (ss *stubStorage) getPublicPages() []string {
 }
 
 func (ss *stubStorage) getPage(p *wikiPage) (*wikiPage, error) {
-	return &ss.page, ss.expectederr
+	return ss.getPageFunc(p)
 }
 
 func (ss *stubStorage) searchPages(root, query string) []string {

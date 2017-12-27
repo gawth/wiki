@@ -42,6 +42,9 @@ func TestViewHandler(t *testing.T) {
 	}
 	s := stubStorage{
 		page: p,
+		getPageFunc: func(pg *wikiPage) (*wikiPage, error) {
+			return pg, nil
+		},
 	}
 
 	req := httptest.NewRequest("GET", "http://localhost/wiki/view/test", nil)
@@ -64,6 +67,9 @@ func TestViewRedirect(t *testing.T) {
 	s := stubStorage{
 		page:        p,
 		expectederr: errors.New("Page not found"),
+		getPageFunc: func(pg *wikiPage) (*wikiPage, error) {
+			return nil, errors.New("Page not found")
+		},
 	}
 
 	req := httptest.NewRequest("GET", "http://localhost/wiki/view/test", nil)

@@ -2,6 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -11,29 +14,80 @@ func apiHandler(fn func(http.ResponseWriter, *http.Request, storage), s storage)
 	}
 }
 
+func handleTag(w http.ResponseWriter, r *http.Request, s storage) bool {
+	tag := r.URL.Query().Get("tag") // Get the tag
+	// Just return an empty response if no tag found
+	if tag == "" {
+		return false
+	}
+	data := s.GetTagWikis(tag)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(data)
+	return true
+}
+func handleGetWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
+	wiki := r.URL.Query().Get("wiki") // Get the wiki
+	if wiki == "" {
+		return false
+	}
+	wikipg := &wikiPage{basePage: basePage{Title: wiki}}
+	wikipg, err := s.getPage(wikipg)
+	if err != nil {
+		return false
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(wikipg)
+	return true
+}
+func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
+	log.Println("Handling POST")
+	wiki := r.URL.Query().Get("wiki") // Get the wiki
+	if wiki == "" {
+		log.Println("No wiki param")
+		return false
+	}
+
+	if r.Method != "POST" {
+		log.Println("Not a post")
+		return false
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return false
+	}
+
+	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body)}
+	// TODO: Handle encryption and published pages
+
+	err = p.save(s)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return false
+	}
+	log.Printf("Saved %v\n", body)
+
+	w.WriteHeader(http.StatusOK)
+	return true
+}
+
 func innerAPIHandler(w http.ResponseWriter, r *http.Request, s storage) {
 	w.Header().Set("Content-Type", "application/json")
 
-	tag := r.URL.Query().Get("tag") // Get the tag
-	// Just return an empty response if no tag found
-	if tag != "" {
-		data := s.GetTagWikis(tag)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(data)
+	if ok := handleTag(w, r, s); ok {
 		return
 	}
-	wiki := r.URL.Query().Get("wiki") // Get the wiki
-	if wiki != "" {
-		wikipg := &wikiPage{basePage: basePage{Title: wiki}}
-		wikipg, err := s.getPage(wikipg)
-		if err == nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(wikipg)
-			return
-		}
-		// dont insert code here unless you want to exe in the error case
+
+	if ok := handleGetWiki(w, r, s); ok {
+		return
+	}
+
+	if ok := handlePostWiki(w, r, s); ok {
+		return
 	}
 
 	w.WriteHeader(http.StatusBadRequest)
