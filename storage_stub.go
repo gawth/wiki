@@ -5,10 +5,11 @@ type stubStorage struct {
 	expectederr     error
 	GetTagWikisFunc func(string) Tag
 	getPageFunc     func(*wikiPage) (*wikiPage, error)
+	storeFileFunc   func(string, []byte) error
 }
 
 func (ss *stubStorage) storeFile(name string, content []byte) error {
-	return nil
+	return ss.storeFileFunc(name, content)
 }
 
 func (ss *stubStorage) getPublicPages() []string {

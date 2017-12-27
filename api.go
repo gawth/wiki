@@ -27,6 +27,11 @@ func handleTag(w http.ResponseWriter, r *http.Request, s storage) bool {
 	return true
 }
 func handleGetWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
+	if r.Method != "GET" {
+		log.Println("Not a GET")
+		return false
+	}
+
 	wiki := r.URL.Query().Get("wiki") // Get the wiki
 	if wiki == "" {
 		return false
@@ -43,14 +48,14 @@ func handleGetWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 }
 func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 	log.Println("Handling POST")
-	wiki := r.URL.Query().Get("wiki") // Get the wiki
-	if wiki == "" {
-		log.Println("No wiki param")
+	if r.Method != "POST" {
+		log.Println("Not a post")
 		return false
 	}
 
-	if r.Method != "POST" {
-		log.Println("Not a post")
+	wiki := r.URL.Query().Get("wiki") // Get the wiki
+	if wiki == "" {
+		log.Println("No wiki param")
 		return false
 	}
 
