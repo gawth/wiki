@@ -1,9 +1,25 @@
 var markup = `
-	<div> 
-		<h1>{{title}}</h1> 
-		 <textarea v-model="wikiedit" @blur="unsetFocus()" @input="update" v-show="focus" id="input" class="form-control"></textarea>
-		<div v-html="compiledMarkdown" v-show="!focus" @click="setFocus()" id="output"></div>
-	 </div> 
+		<div class="pure-u-22-24"> 
+			<h1>{{title}}</h1> 
+			<div class="pure-form">
+				<textarea v-model="wikiedit" 
+					@blur="unsetFocus()" 
+					@input="update" 
+					v-show="focus" 
+					v-on:keydown.enter="handleEnter"
+					v-on:keydown.83="handleCtrlS"
+					id="input" 
+					rows=20
+					class="pure-input-1">
+				</textarea>
+			</div>
+			<div v-html="compiledMarkdown" 
+				v-show="!focus" 
+				@click="setFocus()" 
+				class="wikiBody"
+				id="output">
+			</div>
+		 </div> 
 `
 export default {
 	template: markup,
@@ -36,9 +52,24 @@ export default {
 		    document.getElementById('input').focus();
 		},
 	    unsetFocus: function () {
+			this.saveWiki();
 		    this.focus = false;
-			this.$emit('setwiki', [this.title, this.wikiedit]);
 		    document.getElementById('output').focus();
+		},
+		handleEnter: function(e) {
+			if (e.ctrlKey) {
+				this.unsetFocus();
+			}
+		},
+		handleCtrlS: function(e) {
+			if (e.ctrlKey) {
+				this.saveWiki();
+			}
+		},
+		saveWiki: function() {
+			if (this.wikiedit != this.wikimd) {
+				this.$emit('setwiki', [this.title, this.wikiedit]);
+			}
 		}
 	}
 }
