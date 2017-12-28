@@ -8,7 +8,9 @@ var markup = `
 					v-show="focus" 
 					v-on:keydown.enter="handleEnter"
 					v-on:keydown.83="handleCtrlS"
+					v-on:keyup.esc="unsetFocus()"
 					id="input" 
+					ref="edit"
 					rows=20
 					class="pure-input-1">
 				</textarea>
@@ -49,12 +51,19 @@ export default {
 	    setFocus: function () {
 			this.wikiedit = this.wikimd;
 		    this.focus = true;
-		    document.getElementById('input').focus();
+
+			// Save off a ref for the closure 
+			// and then set the focus on the next tick
+			// This is needed to allow vue to make the 
+			// component visible before we give it focus
+			var that = this;
+			Vue.nextTick(function() {
+				that.$refs.edit.focus();
+			});
 		},
 	    unsetFocus: function () {
 			this.saveWiki();
 		    this.focus = false;
-		    document.getElementById('output').focus();
 		},
 		handleEnter: function(e) {
 			if (e.ctrlKey) {

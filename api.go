@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -65,10 +64,15 @@ func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 		return false
 	}
 
-	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body)}
+	var wp wikiPage
+	if err := json.Unmarshal(body, &wp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return false
+	}
+
 	// TODO: Handle encryption and published pages
 
-	err = p.save(s)
+	err = wp.save(s)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
