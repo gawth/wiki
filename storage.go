@@ -15,6 +15,7 @@ import (
 
 type storage interface {
 	storeFile(name string, content []byte) error
+	deleteFile(name string) error
 	getPublicPages() []string
 	getPage(p *wikiPage) (*wikiPage, error)
 	searchPages(root, query string) []string
@@ -38,7 +39,6 @@ func createDir(filename string) error {
 	}
 	return nil
 }
-
 func (fs fileStorage) storeFile(name string, content []byte) error {
 	err := createDir(name)
 	if err != nil {
@@ -47,6 +47,14 @@ func (fs fileStorage) storeFile(name string, content []byte) error {
 
 	err = ioutil.WriteFile(name, content, 0600)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fs fileStorage) deleteFile(name string) error {
+	if err := os.Remove(name); err != nil {
 		return err
 	}
 

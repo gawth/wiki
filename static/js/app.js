@@ -1,17 +1,18 @@
 import MainWikiContent from './components/mainwikicontent.js';
 import WikiTags from './components/wikitags.js';
+import Published from './components/pubflag.js';
 
 var app = new Vue({
 	el: '#app',
 	delimiters: ['${', '}'],
 	components: {
 		MainWikiContent,
-		WikiTags
+		WikiTags,
+		Published
 	},
 	data: {
 		title: '',
-		wikimd: { "Body":"# Temp Heading", "Tags":""},
-		wikitags: 'sometags'
+		wikimd: { "Body":"# Temp Heading", "Tags":"", "Published":false}
 	},
 	methods: {
 		getwiki(wiki) {
@@ -36,6 +37,11 @@ var app = new Vue({
 		savetags(tags) {
 			console.log("Save tags: " + tags);
 			this.wikimd.Tags = tags;
+			this.savewiki()
+		},
+		savepubflag(val) {
+			console.log("Save pub flag: " + val);
+			this.wikimd.Published = val;
 			this.savewiki()
 		},
 		savewiki() {

@@ -11,6 +11,9 @@ type stubStorage struct {
 func (ss *stubStorage) storeFile(name string, content []byte) error {
 	return ss.storeFileFunc(name, content)
 }
+func (ss *stubStorage) deleteFile(name string) error {
+	return nil
+}
 
 func (ss *stubStorage) getPublicPages() []string {
 	return []string{}

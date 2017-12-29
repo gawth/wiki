@@ -88,8 +88,8 @@ func (p *wikiPage) save(s storage) error {
 	}
 
 	log.Printf("Pub flag %v\n", p.Published)
+	pubfile := getWikiPubFilename(p.Title)
 	if p.Published {
-		pubfile := getWikiPubFilename(p.Title)
 		log.Printf("Saving %v\n", pubfile)
 		err = s.storeFile(pubfile, nil)
 		if err != nil {
@@ -97,7 +97,13 @@ func (p *wikiPage) save(s storage) error {
 		}
 
 	} else {
-		// Need to delete the pub file if it exists
+		log.Printf("Removing %v\n", pubfile)
+		// Only return an error if something other than file doesnt exit
+		// We expect this fail to not exist most of the time but we dont know if
+		// we don't try
+		if err = s.deleteFile(pubfile); !os.IsNotExist(err) {
+			return err
+		}
 	}
 
 	return nil

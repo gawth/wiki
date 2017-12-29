@@ -89,7 +89,9 @@ func TestWikiApiGetHandler(t *testing.T) {
 }
 func TestWikiApiPostHandler(t *testing.T) {
 
-	req := httptest.NewRequest("POST", "http://localhost/api?wiki=fred", strings.NewReader("Some markup"))
+	data, _ := json.Marshal(wikiPage{basePage: basePage{Title: "fred"}, Body: "Some markup"})
+
+	req := httptest.NewRequest("POST", "http://localhost/api?wiki=fred", strings.NewReader(string(data)))
 	w := httptest.NewRecorder()
 	s := stubStorage{
 		getPageFunc: func(pg *wikiPage) (*wikiPage, error) {

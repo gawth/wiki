@@ -78,7 +78,7 @@ func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return false
 	}
-	log.Printf("Saved %v\n", body)
+	log.Printf("Saved %v\n", wp)
 
 	w.WriteHeader(http.StatusOK)
 	return true

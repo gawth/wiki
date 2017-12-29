@@ -10,6 +10,7 @@
 			<div id="app">
 				  <main-wiki-content @getwiki="getwiki($event)" @setwiki="setwiki($event)" title="{{.Title}}" :wikimd="wikimd.Body"></main-wiki-content>
 				  <wiki-tags :tags="wikimd.Tags" @savetags="savetags($event)"></wiki-tags>
+				  <published :flag="wikimd.Published" @savepubflag="savepubflag($event)"></published>
 			</div>
         </section>
         {{template "footer"}}
