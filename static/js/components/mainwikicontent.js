@@ -41,7 +41,6 @@ export default {
 		}
 	},
 	mounted: function() {
-		console.log('Mounted called on ' + this.title);
 		this.$emit('getwiki', this.title);
 	},
 	methods: {

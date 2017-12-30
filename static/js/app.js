@@ -1,6 +1,6 @@
 import MainWikiContent from './components/mainwikicontent.js';
 import WikiTags from './components/wikitags.js';
-import Published from './components/pubflag.js';
+import WikiFlag from './components/wikiflag.js';
 
 var app = new Vue({
 	el: '#app',
@@ -8,7 +8,7 @@ var app = new Vue({
 	components: {
 		MainWikiContent,
 		WikiTags,
-		Published
+		WikiFlag
 	},
 	data: {
 		title: '',
@@ -16,12 +16,10 @@ var app = new Vue({
 	},
 	methods: {
 		getwiki(wiki) {
-			console.log('Getting data for : ' + wiki);
 			this.title = wiki;
 			axios.get('/api?wiki=' + wiki)
 				.then(response => {
 					this.wikimd = response.data;
-					console.log("Got data : " + this.wikimd);
 				})
 				.catch(e => {
 					console.log("ERROR: " + e);
@@ -35,17 +33,20 @@ var app = new Vue({
 			this.savewiki()
 		},
 		savetags(tags) {
-			console.log("Save tags: " + tags);
 			this.wikimd.Tags = tags;
 			this.savewiki()
 		},
-		savepubflag(val) {
-			console.log("Save pub flag: " + val);
-			this.wikimd.Published = val;
+		saveflag(vals) {
+			var flag, val;
+			[flag, val] = vals;
+			if (flag === 'Published') {
+				this.wikimd.Published = val;
+			} else if (flag === 'Encrypted') {
+				this.wikimd.Encrypted = val;
+			}
 			this.savewiki()
 		},
 		savewiki() {
-			console.log("Saving wiki : " + this.title);
 			axios.post('/api?wiki=' + this.title, this.wikimd)
 				.then(response => {
 					console.log("Saved :-)")

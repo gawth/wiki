@@ -55,7 +55,6 @@ export default {
 		},
 		saveTags: function() {
 			if (this.tags != this.tagedit) {
-				console.log("Calling savetags");
 				this.$emit('savetags', this.tagedit);
 			}
 		}
