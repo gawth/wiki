@@ -17,7 +17,7 @@ var markup = `
 			</div>
 			<div v-html="compiledMarkdown" 
 				v-show="!focus" 
-				@click="setFocus()" 
+				@dblclick="setFocus()" 
 				class="wikiBody"
 				id="output">
 			</div>

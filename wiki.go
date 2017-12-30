@@ -249,7 +249,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search|viewjs)/([a-zA-Z0-9\\.\\-_ /]*)$")
+var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ /]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -346,8 +346,8 @@ func main() {
 	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
 	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
 	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(makeSearchHandler(getNav, fstore)))
-	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav, fstore)))
-	httpsmux.Handle("/wiki/viewjs/", authHandlers.ThenFunc(makeHandler(vueHandler, getNav, fstore)))
+	//httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav, fstore)))
+	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(vueHandler, getNav, fstore)))
 	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav, fstore)))
 	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))
 	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))

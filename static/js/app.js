@@ -8,7 +8,7 @@ var wikiword = function() {
 		type: 'lang',
 		regex: /\{\{([^\}^#]+)[#]*(.*)\}\}/g,
 		//regex: /test2/g,
-		replace: '<a href=\"/wiki/viewjs/$1#$2\">$1</a>'
+		replace: '<a href=\"/wiki/view/$1#$2\">$1</a>'
 		// replace: 'success'
 	};
 };
@@ -23,7 +23,8 @@ var converter = new showdown.Converter(
 		tables: true,
 		tasklists: true,
 		openLinksInNewWindow: true,
-		emoji: true
+		emoji: true,
+		strikethrough: true
 	}
 );
 
