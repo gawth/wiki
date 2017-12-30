@@ -23,11 +23,14 @@ var markup = `
 			</div>
 		 </div> 
 `
+
+
 export default {
 	template: markup,
 	props: [
 		'title',
-		'wikimd'
+		'wikimd',
+		'convertMarkdown'
 	],
 	data() {
 		return {
@@ -37,7 +40,7 @@ export default {
 	},
 	computed: {
 		compiledMarkdown: function() {
-			return marked(this.wikimd)
+			return this.convertMarkdown(this.wikimd)
 		}
 	},
 	mounted: function() {

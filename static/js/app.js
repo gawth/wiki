@@ -2,6 +2,31 @@ import MainWikiContent from './components/mainwikicontent.js';
 import WikiTags from './components/wikitags.js';
 import WikiFlag from './components/wikiflag.js';
 
+
+var wikiword = function() {
+	return  {
+		type: 'lang',
+		regex: /\{\{([^\}^#]+)[#]*(.*)\}\}/g,
+		//regex: /test2/g,
+		replace: '<a href=\"/wiki/viewjs/$1#$2\">$1</a>'
+		// replace: 'success'
+	};
+};
+showdown.extension('wikiword', wikiword);
+
+var converter = new showdown.Converter(
+	{
+		extensions:['wikiword'],
+		parseImgDimensions: true,
+		simplifiedAutoLink: true,
+		excludeTrailingPunctuationFromURLs: true,
+		tables: true,
+		tasklists: true,
+		openLinksInNewWindow: true,
+		emoji: true
+	}
+);
+
 var app = new Vue({
 	el: '#app',
 	delimiters: ['${', '}'],
@@ -15,6 +40,10 @@ var app = new Vue({
 		wikimd: { "Body":"# Temp Heading", "Tags":"", "Published":false}
 	},
 	methods: {
+		convertMarkdown: function(md) {
+			// return marked(md);
+			return converter.makeHtml(md);
+		},
 		getwiki(wiki) {
 			this.title = wiki;
 			axios.get('/api?wiki=' + wiki)
