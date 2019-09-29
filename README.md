@@ -10,6 +10,8 @@ The app is very much a work in progress.  It works enough for me to use it but i
 # Building
 To get up and running clone as per usual, go get to pull down any dependencies and then go build or install.
 
+You will also need to pull down latest npm dependencies for the web stuff to work.  Cd in to static/js and npm install in there to get the latest stuff.
+
 # Running
 To be honest the config side of things needs a little work to make it more user friendly to run up for the first time - like I said, still a work in progress.
 
