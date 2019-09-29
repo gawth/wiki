@@ -11,7 +11,7 @@ var markup = `
 					v-on:keyup.esc="unsetFocus()"
 					id="input" 
 					ref="edit"
-					rows=20
+					rows=10
 					class="pure-input-1">
 				</textarea>
 			</div>

@@ -11,7 +11,7 @@ var markup = `
 		<input  v-model="tagedit"
 			@blur="focus = false""
 			v-show="focus"
-			v-on:keyup.esc="unsetFocus()"
+			v-on:keyup.enter="unsetFocus"
 			ref="edit"
 			id="input">
 		</input>
@@ -36,22 +36,23 @@ export default {
 		}
 	},
 	methods: {
-	    setFocus: function () {
-			this.tagedit = this.tags;
-		    this.focus = true;
+    setFocus: function () {
+      console.log("Tags in focus...")
+      this.tagedit = this.tags;
+      this.focus = true;
 
-			// Save off a ref for the closure 
-			// and then set the focus on the next tick
-			// This is needed to allow vue to make the 
-			// component visible before we give it focus
-			var that = this;
-			Vue.nextTick(function() {
-				that.$refs.edit.focus();
-			});
+      // Save off a ref for the closure 
+      // and then set the focus on the next tick
+      // This is needed to allow vue to make the 
+      // component visible before we give it focus
+      var that = this;
+      Vue.nextTick(function() {
+        that.$refs.edit.focus();
+      });
 		},
-	    unsetFocus: function () {
-		    this.focus = false;
-			this.saveTags();
+    unsetFocus: function () {
+      this.focus = false;
+      this.saveTags();
 		},
 		saveTags: function() {
 			if (this.tags != this.tagedit) {
