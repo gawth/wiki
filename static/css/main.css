@@ -6,10 +6,10 @@
 }
 
 .wikitag {
-    background: aliceblue;
-    padding: 5px;
-    margin: 5px;
-    display: inline-block
+    background: #9d99bf;
+    padding: 10px;
+    display: inline-block;
+	border-radius: 5px;
 }
 
 .wikiBody img {
