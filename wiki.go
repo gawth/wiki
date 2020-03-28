@@ -14,8 +14,9 @@ import (
 
 	"strconv"
 
-	"github.com/justinas/alice"       // Middleware chaining
-	"github.com/russross/blackfriday" // Markdown lib
+	"github.com/justinas/alice" // Middleware chaining
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/russross/blackfriday"
 )
 
 var wikiDir string
@@ -109,33 +110,24 @@ func (p *wikiPage) save(s storage) error {
 	return nil
 }
 
-const (
-	myHTMLFlags = 0 |
-		blackfriday.HTML_USE_XHTML |
-		blackfriday.HTML_USE_SMARTYPANTS |
-		blackfriday.HTML_SMARTYPANTS_FRACTIONS |
-		blackfriday.HTML_SMARTYPANTS_DASHES |
-		blackfriday.HTML_SMARTYPANTS_LATEX_DASHES
-
-	myExtensions = 0 |
-		blackfriday.EXTENSION_NO_INTRA_EMPHASIS |
-		blackfriday.EXTENSION_TABLES |
-		blackfriday.EXTENSION_FENCED_CODE |
-		blackfriday.EXTENSION_AUTOLINK |
-		blackfriday.EXTENSION_STRIKETHROUGH |
-		blackfriday.EXTENSION_SPACE_HEADERS |
-		blackfriday.EXTENSION_HEADER_IDS |
-		blackfriday.EXTENSION_BACKSLASH_LINE_BREAK |
-		blackfriday.EXTENSION_DEFINITION_LISTS |
-		blackfriday.EXTENSION_FOOTNOTES
-)
-
 func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	if err != nil {
 		return page, err
 	}
-	mdRender := blackfriday.HtmlRenderer(myHTMLFlags, "", "")
-	page.Body = template.HTML(blackfriday.Markdown([]byte(page.Body), mdRender, myExtensions))
+	p := bluemonday.UGCPolicy()
+	p.AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
+
+	page.Body = template.HTML(regexp.MustCompile("\r\n").ReplaceAllString(string(page.Body), "\n"))
+
+	unsafe := blackfriday.Run([]byte(page.Body),
+		blackfriday.WithExtensions(blackfriday.CommonExtensions|blackfriday.HardLineBreak),
+	//blackfriday.WithRenderer(blackfriday.NewHTMLRenderer(
+	//	blackfriday.HTMLRendererParameters{
+	//		Flags: blackfriday.CommonHTMLFlags,
+	//	}))
+	)
+
+	page.Body = template.HTML(p.SanitizeBytes(unsafe))
 	return page, nil
 
 }
@@ -210,6 +202,9 @@ func simpleHandler(page string, fn navFunc, s storage) func(http.ResponseWriter,
 
 func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage) string {
 	body := r.FormValue("body")
+
+	body = regexp.MustCompile("\r\n").ReplaceAllString(body, "\n")
+
 	log.Printf("Checkbox is : %v", r.FormValue("wikipub"))
 	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body), Tags: r.FormValue("wikitags")}
 	if r.FormValue("wikipub") == "on" {
