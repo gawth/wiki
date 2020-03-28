@@ -1,8 +1,5 @@
-console.log("Hello Alan");
-console.log($.support);
 
 $(document).ready(function() {
-    console.log('ready!');
 
     $(".tag-label").click(function(event) {
         console.log("Event " + event.target.textContent);
