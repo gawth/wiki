@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -36,16 +37,14 @@ func getenv(key, fallback string) string {
 // config object
 func LoadConfig() (*Config, error) {
 	path := "config.json"
-
-	config := Config{}
-	config.HTTPPort, _ = strconv.Atoi(getenv("PORT", "80"))
-	config.HTTPSPort, _ = strconv.Atoi(getenv("HTTPSPORT", "443"))
-	config.KeyLocation = getenv("KEYLOCATION", "./excluded/")
-	config.UseHTTPS, _ = strconv.ParseBool(getenv("USEHTTPS", "false"))
-	config.WikiDir = getenv("WIKIDIR", "wikidir")
-	config.Logfile = getenv("LOGFILE", "wiki.log")
-	config.CookieKey = getenv("COOKIEKEY", "")
-	config.EncryptionKey = getenv("ENCRYPTIONKEY", "")
+	config := Config{
+		UseHTTPS:    false,
+		WikiDir:     "./wikidir",
+		Logfile:     "defaultwiki.log",
+		KeyLocation: "./excluded/",
+		HTTPPort:    8080,
+		HTTPSPort:   8443,
+	}
 	conf, err := ioutil.ReadFile(path)
 	if err == nil {
 		log.Printf("Using config file")
@@ -54,6 +53,15 @@ func LoadConfig() (*Config, error) {
 			return nil, err
 		}
 	}
+
+	config.HTTPPort, _ = strconv.Atoi(getenv("PORT", strconv.Itoa(config.HTTPPort)))
+	config.HTTPSPort, _ = strconv.Atoi(getenv("HTTPSPORT", strconv.Itoa(config.HTTPSPort)))
+	config.KeyLocation = getenv("KEYLOCATION", config.KeyLocation)
+	config.UseHTTPS, _ = strconv.ParseBool(getenv("USEHTTPS", strconv.FormatBool(config.UseHTTPS)))
+	config.WikiDir = getenv("WIKIDIR", config.WikiDir)
+	config.Logfile = getenv("LOGFILE", config.Logfile)
+	config.CookieKey = getenv("COOKIEKEY", config.CookieKey)
+	config.EncryptionKey = getenv("ENCRYPTIONKEY", config.EncryptionKey)
 	if len(config.CookieKey) == 0 {
 		return nil, errors.New("Must set a valid cookie key")
 	}
@@ -69,6 +77,11 @@ func LoadConfig() (*Config, error) {
 	if len(config.EncryptionKey) != 32 {
 		return nil, errors.New("Need to set EncryptionKey to be 32 char string")
 	}
+	j, err := json.MarshalIndent(config, "", "   ")
+	if err != nil {
+		return nil, err
+	}
+	fmt.Print(string(j))
 
 	return &config, nil
 
