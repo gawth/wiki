@@ -88,6 +88,7 @@ func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
 		default:
 			// Exhausted logins
 			renderTemplate(w, "login", "Login Blocked")
+			log.Println("Login max attempts reached")
 			return
 		}
 		username := r.PostFormValue("username")
@@ -196,7 +197,11 @@ func persistUsers(a Auth) error {
 		buffer.Write(val.password)
 		buffer.WriteString("\n")
 	}
-	ioutil.WriteFile(a.filepath+dataFile, buffer.Bytes(), 0600)
+	err := ioutil.WriteFile(a.filepath+dataFile, buffer.Bytes(), 0600)
+	if err != nil {
+		log.Printf("ERROR: Writing password file: %v", err)
+		return err
+	}
 	return nil
 }
 
@@ -218,20 +223,22 @@ func NewAuth(config Config, fn func(Auth) error) Auth {
 	auth.Attempts = resetAttempts(5)
 
 	data, err := ioutil.ReadFile(config.KeyLocation + dataFile)
-	if err == nil {
-		lines := bytes.Split(data, []byte("\n"))
-		for _, line := range lines {
-			vals := bytes.Split(line, []byte(","))
-			if len(vals) != 2 {
-				continue
-			}
-
-			user := NewUserWithHash(string(vals[0]), vals[1])
-
-			auth.users[user.username] = user
+	if err != nil {
+		log.Printf("Error reading password file: %v", err)
+		return auth
+	}
+	lines := bytes.Split(data, []byte("\n"))
+	for _, line := range lines {
+		vals := bytes.Split(line, []byte(","))
+		if len(vals) != 2 {
+			continue
 		}
 
+		user := NewUserWithHash(string(vals[0]), vals[1])
+
+		auth.users[user.username] = user
 	}
+
 	return auth
 }
 
