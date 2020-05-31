@@ -3,7 +3,7 @@
 <body>
     <script>
         window.onload = function() {
-            document.getElementById("wikiedit").onkeydown = function(e) {
+            document.getElementById("wikieditform").onkeydown = function(e) {
                 if (e.keyCode == 13 && e.ctrlKey) { // keyCode 13 is Enter
                     document.getElementById("wikisubmit").click(); // submit the form by hitting ctrl + enter
                     // alert(e.keyCode); // to know other keyCodes of each keys
@@ -20,7 +20,7 @@
 
             <div class="pure-u-15-24" id="editing">
                 <div class="l-box">
-                    <form id="wikiedit" class="pure-form pure-form-stacked" action="/wiki/save/{{.Title}}" method="POST">
+                    <form id="wikieditform" class="pure-form pure-form-stacked" action="/wiki/save/{{.Title}}" method="POST">
                         <fieldset>
                             <textarea id="wikiedit" class="pure-input-1" rows=20 name="body">{{.Body}}</textarea>
                             <label for="wikitags">
