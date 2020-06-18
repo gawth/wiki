@@ -362,7 +362,6 @@ func main() {
 
 		httpmux.HandleFunc("/wiki", redirectHandler(*config))
 		httpsmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
-	} else {
 	}
 
 	// Listen for normal traffic against root
