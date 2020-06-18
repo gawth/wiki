@@ -120,11 +120,12 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 	page.Body = template.HTML(regexp.MustCompile("\r\n").ReplaceAllString(string(page.Body), "\n"))
 
 	unsafe := blackfriday.Run([]byte(page.Body),
-		blackfriday.WithExtensions(blackfriday.CommonExtensions|blackfriday.HardLineBreak),
-	//blackfriday.WithRenderer(blackfriday.NewHTMLRenderer(
-	//	blackfriday.HTMLRendererParameters{
-	//		Flags: blackfriday.CommonHTMLFlags,
-	//	}))
+		blackfriday.WithExtensions(
+			blackfriday.CommonExtensions|
+				blackfriday.HardLineBreak|
+				blackfriday.HeadingIDs|
+				blackfriday.AutoHeadingIDs,
+		),
 	)
 
 	page.Body = template.HTML(p.SanitizeBytes(unsafe))
