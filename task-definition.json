@@ -6,7 +6,7 @@
     "containerDefinitions": [
 		{
 			"name": "wiki",
-			"image": "ecs-devops-sandbox-repository:00000",
+			"image": "wiki-sandbox-repository:00000",
 			"resourceRequirements": null,
 			"essential": true,
 			"portMappings": [
@@ -19,11 +19,11 @@
 		}
 	],
     "volumes": [],
-    "networkMode": "awsvpc",
+    "networkMode": "wikivpc",
     "memory": "512",
     "cpu": "256",
     "executionRoleArn": "arn:aws:iam::346653978751:role/ecs-devops-sandbox-execution-role",
-    "family": "ecs-devops-sandbox-task-definition",
+    "family": "wiki-sandbox-task-definition",
     "taskRoleArn": "",
     "placementConstraints": []
 }
