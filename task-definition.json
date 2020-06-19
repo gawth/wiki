@@ -19,7 +19,7 @@
 		}
 	],
     "volumes": [],
-    "networkMode": "wikivpc",
+    "networkMode": "awsvpc",
     "memory": "512",
     "cpu": "256",
     "executionRoleArn": "arn:aws:iam::346653978751:role/ecs-devops-sandbox-execution-role",
