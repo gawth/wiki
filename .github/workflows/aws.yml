@@ -27,7 +27,7 @@ on:
   push:
     branches:
       - master
-        - 
+
 name: Deploy to Amazon ECS
 
 jobs:
