@@ -147,10 +147,6 @@ func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	renderTemplate(w, "view", p)
 }
 
-func vueHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
-	renderTemplate(w, "viewjs", p)
-}
-
 func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 	p, _ = s.getPage(p)
 	renderTemplate(w, "edit", p)
@@ -228,7 +224,6 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
-	"views/viewjs.html",
 	"views/pub.html",
 	"views/pubhome.html",
 	"views/login.html",
