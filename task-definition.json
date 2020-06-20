@@ -15,7 +15,15 @@
 					"protocol": "tcp"
 				}
 						
-			]
+			],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "wiki-logs",
+                    "awslogs-region": "eu-west-1",
+                    "awslogs-stream-prefix": "wiki-logs"
+                }
+            }
 		}
 	],
     "volumes": [],
