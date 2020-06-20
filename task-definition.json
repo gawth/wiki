@@ -19,11 +19,11 @@
 			"secrets": [
 				{
 				  "name": "COOKIEKEY",
-				  "valueFrom": "parameter/cookiekey"
+				  "valueFrom": "cookiekey"
 				},
 				{
 				  "name": "ENCRYPTIONKEY",
-				  "valueFrom": "parameter/passwordkey"
+				  "valueFrom": "passwordkey"
 				}
 			],
 			"environment": [],
