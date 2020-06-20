@@ -75,7 +75,8 @@ func LoadConfig() (*Config, error) {
 	}
 
 	if len(config.EncryptionKey) != 32 {
-		return nil, errors.New("Need to set EncryptionKey to be 32 char string")
+		return nil, errors.New(fmt.Sprintf("Need to set EncryptionKey to be 32 char string not %v",
+			len(config.EncryptionKey)))
 	}
 	j, err := json.MarshalIndent(config, "", "   ")
 	if err != nil {
