@@ -16,6 +16,17 @@
 				}
 						
 			],
+			"secrets": [
+				{
+				  "name": "COOKIEKEY",
+				  "valueFrom": "parameter/cookiekey"
+				},
+				{
+				  "name": "ENCRYPTIONKEY",
+				  "valueFrom": "parameter/passwordkey"
+				}
+			],
+			"environment": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
