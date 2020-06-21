@@ -4,11 +4,12 @@ ADD . /wiki
 
 WORKDIR /wiki
 
-RUN mkdir wikidir
+ENV WIKIDIR /usr/share/wiki
+
 RUN mkdir secret
-ENV WIKIDIR wikidir
-ENV LOGFILE ""
 ENV KEYLOCATION secret
+
+ENV LOGFILE ""
 ENV PORT 8990
 
 RUN go get ./...

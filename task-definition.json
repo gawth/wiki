@@ -34,10 +34,23 @@
                     "awslogs-region": "eu-west-1",
                     "awslogs-stream-prefix": "wiki-logs"
                 }
-            }
+            },
+			"mountPoints": [
+				{
+					"containerPath": "/usr/share/wiki",
+					"sourceVolume": "wiki-volume"
+				}
+			]
 		}
 	],
-    "volumes": [],
+    "volumes": [
+	 {
+		 "name": "wiki-volume",
+		 "efsVolumeConfiguration": {
+			"fileSystemId": "wiki-efs"
+		 }
+	 }
+	],
     "networkMode": "awsvpc",
     "memory": "512",
     "cpu": "256",
