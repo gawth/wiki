@@ -47,7 +47,7 @@
 	 {
 		 "name": "wiki-volume",
 		 "efsVolumeConfiguration": {
-			"fileSystemId": "wikiefs"
+			"fileSystemId": "fs-0bbb7cc1"
 		 }
 	 }
 	],
