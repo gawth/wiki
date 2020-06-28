@@ -14,7 +14,7 @@ var ParseData = []struct {
 	res    QueryResults
 }{
 	{"wiki\t12\tsometext", QueryResults{"wiki", "12", "sometext"}},
-	{"wiki\t12\tsometext#123", QueryResults{"wiki", "12", "sometext#123"}},
+	{"wiki\t12\tsometext#123", QueryResults{"wiki", "12", "sometext#1234"}},
 	{"wiki\t12\tsometext\tfred", QueryResults{"wiki", "12", "sometext\tfred"}},
 	{"wiki\t12", QueryResults{"wiki", "12", ""}},
 	{"wiki", QueryResults{"ERROR", "", "Invalid query result"}},
