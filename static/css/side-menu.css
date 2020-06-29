@@ -245,7 +245,8 @@ small screens.
         visibility: hidden;
     }
     #menu {
-        visibility: hidden;
+		position: unset;
+		width: 100%;
     }
     #editing {
         width: 110%;
