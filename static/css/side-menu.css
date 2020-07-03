@@ -516,7 +516,7 @@ Main Components
     }
     .cd-accordion-menu ul ul label,
     .cd-accordion-menu ul ul a {
-        padding-left: 130px;
+        padding-left: 30px;
     }
     .cd-accordion-menu ul ul label::before {
         left: 72px;
@@ -543,4 +543,8 @@ Main Components
     -webkit-transition: -webkit-transform 0.3s;
     -moz-transition: -moz-transform 0.3s;
     transition: transform 0.3s;
+}
+
+.cd-accordion-menu label {
+	font-weight: bold;
 }

@@ -1,26 +1,31 @@
+
+{{define "submenu"}}
+	{{if .IsDir}}
+	<li class="has-children">
+		<input type="checkbox" name="sub-group-{{.Name}}" id="sub-group-{{.Name}}">
+		<label for="sub-group-{{.Name}}">{{.Name}}</label>
+		<!-- -->
+		<ul class="">
+			{{range .SubNav}}
+			{{template "submenu" .}}
+			<!-- -->
+			{{end}}
+		</ul>
+	</li>
+	{{else}}
+	<li class=""><a href="/wiki/view{{.URL}}" class="">{{.Name}}</a></li>
+	{{end}}
+{{end}}
+
 {{define "leftnav"}}
 <div id="menu">
     <a class="pure-menu-heading" href="/wiki">Wikis</a>
     <ul class="cd-accordion-menu">
-        {{range $key, $value := .Wikis}}
+
+		{{range .Wikis}}
+			{{template "submenu" .}}
+		{{end}}
         <!-- -->
-        {{if .IsDir}}
-        <li class="has-children">
-            <input type="checkbox" name="sub-group-{{$key}}" id="sub-group-{{$key}}">
-            <label for="sub-group-{{$key}}">{{$value.Name}}</label>
-            <!-- -->
-            <ul class="">
-                {{range $value.SubNav}}
-                <li class=""> <a href="/wiki/view/{{$value.Name}}{{.Name}}" class="">{{.Name}}</a> </li>
-                <!-- -->
-                {{end}}
-            </ul>
-        </li>
-        {{else}}
-        <li class=""><a href="/wiki/view/{{.Name}}" class="">{{.Name}}</a></li>
-        {{end}}
-        <!-- -->
-        {{end}}
         <!-- -->
         <li class="pure-menu-heading">Tags</li>
         {{range $key, $value := .Tags}}

@@ -2,9 +2,6 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -12,6 +9,7 @@ import (
 
 type wikiNav struct {
 	Name   string
+	URL    string
 	IsDir  bool
 	SubNav []wikiNav
 	Mod    time.Time
@@ -39,49 +37,7 @@ func contains(target string, in []string) bool {
 	return false
 }
 
-func closureProcess(root string, names *[]wikiNav) filepath.WalkFunc {
-	return func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Print(err)
-			return err
-		}
-		if info.IsDir() && contains(info.Name(), specialDir) {
-			return filepath.SkipDir
-		}
-		// Ignore anything that isnt an md file
-		if strings.HasSuffix(info.Name(), ".md") {
-			tmp := wikiNav{
-				Name: strings.Replace(strings.TrimSuffix(path, ".md"), root, "", 1),
-			}
-			*names = append(*names, tmp)
-		}
-		if strings.HasSuffix(info.Name(), ".pdf") {
-			tmp := wikiNav{
-				Name: strings.Replace(path, root, "", 1),
-			}
-			*names = append(*names, tmp)
-		}
-		if info.IsDir() && path != root {
-			tmp := wikiNav{
-				Name: strings.Replace(path, root, "", 1) + "/",
-			}
-			*names = append(*names, tmp)
-		}
-		return nil
-	}
-
-}
-func walkWikiDir(path string) []wikiNav {
-	var names []wikiNav
-
-	err := filepath.Walk(path, closureProcess(path, &names))
-	checkErr(err)
-
-	return names
-
-}
-
-func getWikiList(root, path string) []wikiNav {
+func getWikiList(base, path string) []wikiNav {
 	files, err := ioutil.ReadDir(path)
 	checkErr(err)
 
@@ -94,6 +50,7 @@ func getWikiList(root, path string) []wikiNav {
 		if strings.HasSuffix(info.Name(), ".md") {
 			tmp := wikiNav{
 				Name: strings.TrimSuffix(info.Name(), ".md"),
+				URL:  base + "/" + strings.TrimSuffix(info.Name(), ".md"),
 				Mod:  info.ModTime(),
 			}
 			names = append(names, tmp)
@@ -101,16 +58,19 @@ func getWikiList(root, path string) []wikiNav {
 		if strings.HasSuffix(info.Name(), ".pdf") {
 			tmp := wikiNav{
 				Name: info.Name(),
+				URL:  base + "/" + info.Name(),
 				Mod:  info.ModTime(),
 			}
 			names = append(names, tmp)
 		}
 		if info.IsDir() {
+			newbase := base + "/" + info.Name()
 			tmp := wikiNav{
-				Name:  info.Name() + "/",
+				Name:  info.Name(),
+				URL:   newbase,
 				IsDir: true,
 			}
-			tmp.SubNav = getWikiList(root, path+"/"+info.Name())
+			tmp.SubNav = getWikiList(newbase, path+"/"+info.Name())
 			if len(tmp.SubNav) > 0 {
 				// Override the dir's mod time with the first entry
 				tmp.Mod = tmp.SubNav[0].Mod
@@ -126,7 +86,7 @@ func getWikiList(root, path string) []wikiNav {
 
 func getNav(s storage) nav {
 	return nav{
-		Wikis: getWikiList(wikiDir, wikiDir),
+		Wikis: getWikiList("", wikiDir),
 		Tags:  s.IndexRawFiles(wikiDir, "PDF", s.IndexTags(tagDir)),
 	}
 }
