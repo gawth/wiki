@@ -14,13 +14,7 @@ import (
 type Config struct {
 	WikiDir       string
 	Logfile       string
-	CookieKey     string
-	KeyLocation   string
-	CertPath      string
-	KeyPath       string
 	HTTPPort      int
-	HTTPSPort     int
-	UseHTTPS      bool
 	EncryptionKey string
 }
 
@@ -38,12 +32,9 @@ func getenv(key, fallback string) string {
 func LoadConfig() (*Config, error) {
 	path := "config.json"
 	config := Config{
-		UseHTTPS:    false,
-		WikiDir:     "./wikidir",
-		Logfile:     "defaultwiki.log",
-		KeyLocation: "./excluded/",
-		HTTPPort:    8080,
-		HTTPSPort:   8443,
+		WikiDir:  "./wikidir",
+		Logfile:  "defaultwiki.log",
+		HTTPPort: 8080,
 	}
 	conf, err := ioutil.ReadFile(path)
 	if err == nil {
@@ -55,16 +46,9 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config.HTTPPort, _ = strconv.Atoi(getenv("PORT", strconv.Itoa(config.HTTPPort)))
-	config.HTTPSPort, _ = strconv.Atoi(getenv("HTTPSPORT", strconv.Itoa(config.HTTPSPort)))
-	config.KeyLocation = getenv("KEYLOCATION", config.KeyLocation)
-	config.UseHTTPS, _ = strconv.ParseBool(getenv("USEHTTPS", strconv.FormatBool(config.UseHTTPS)))
 	config.WikiDir = getenv("WIKIDIR", config.WikiDir)
 	config.Logfile = getenv("LOGFILE", config.Logfile)
-	config.CookieKey = getenv("COOKIEKEY", config.CookieKey)
 	config.EncryptionKey = getenv("ENCRYPTIONKEY", config.EncryptionKey)
-	if len(config.CookieKey) == 0 {
-		return nil, errors.New("Must set a valid cookie key")
-	}
 	if len(config.EncryptionKey) == 0 {
 		return nil, errors.New("Must set a valid, 32 char Encryption Key")
 	}
@@ -75,8 +59,8 @@ func LoadConfig() (*Config, error) {
 	}
 
 	if len(config.EncryptionKey) != 32 {
-		return nil, errors.New(fmt.Sprintf("Need to set EncryptionKey to be 32 char string not %v",
-			len(config.EncryptionKey)))
+		return nil, fmt.Errorf("Need to set EncryptionKey to be 32 char string not %v",
+			len(config.EncryptionKey))
 	}
 	j, err := json.MarshalIndent(config, "", "   ")
 	if err != nil {
@@ -86,15 +70,4 @@ func LoadConfig() (*Config, error) {
 
 	return &config, nil
 
-}
-
-// LoadCookieKey gets the secret key that will be used for
-// encrypting cookies
-func (c *Config) LoadCookieKey() {
-	if len(c.CookieKey) == 0 {
-		res, err := ioutil.ReadFile(c.KeyLocation + "cookiesecret.txt")
-		checkErr(err)
-		c.CookieKey = string(res)
-	}
-	return
 }

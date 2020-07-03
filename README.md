@@ -22,25 +22,14 @@ The config file is standard json.  Keys are as follows
 |JSON KEY|ENV|DEFAULT|NOTES|
 |-------|----|------|-------|
 |HTTPPort | PORT | 80 | Port for non-secure pages |
-|HTTPSPort | HTTPSPORT | 443 | Port for most pages |
-|KeyLocation | KEYLOCATION | "./excluded/" | Folder for files such as the user data base |
-|UseHTTPS|USEHTTPS|false|Whether to run the web server using SSL certs or use as normal HTTP|
-|CertPath|||Only required for HTTPS - location of the certificate file|
-|KeyPath|||Only required for HTTPS - location of the key file|
 |WikiDir|WIKIDIR|"wikidir"|Folder to place markdown files in - I point this at my Dropbox sync'd folders|
 |Logfile|LOGFILE|"wiki.log"|File to save logging to|
-|CookieKey|COOKIEKEY||Key to be used to sign secure cookies - no default provided|
 |EncryptionKey|ENCRYPTIONKEY||32 character key used to encrpt files - see below|
 
 
-The HTTPS is something I added if I wanted to host in the internet somewhere.  As I said, I wouldn't really trust the app on the internet just yet but the beginnings of security are there.  Rather than run as root I tend to use high ports and then use something like iptables to map port 80/443 to my chosen ports.
-
-When you first run the app up you will need to register a user.  It only supports one user at the moment and I am not really sure how multi user would work just yet nor am I sure I will ever extend to support multi user - it depends if I need to allow others to acess/edit.
-
 # Getting Started
-Once you have run up you get a login/registration screen.  Register a user or sign in to get to the main page.
 
-Here you can create a new page or search existing pages.  Create a new page using any title you want.
+The home page allows you to create new wiki pages.  Just bung in a wiki page name and hit create.
 
 That will take you to the edit page for that wiki word.  Type in some text - there is a handy markdown prompt sheet on the righ.
 
@@ -70,9 +59,10 @@ Finally, on the home page there is also a rudimentary search that will search al
 
 Markdown rendering courtesy of https://github.com/golang-commonmark/markdown
 
-Jason web tokens from https://github.com/dgrijalva/jwt-go
-
-Awesome middleware chaining from https://github.com/justinas/alice
-
 URL Excaping lib github.com/opennota/urlesc
+
+# Changelog (ish)
+
+* 2020-06: Experiments with AWS deployment.  Abandoned due to hassles of setting up EFS with Fargate - life is too short.  Went to Azure instead.
+* 2020-07: I have removed all HTTPS and auth support from the app having replaced with external apps to perform authorisation.
 

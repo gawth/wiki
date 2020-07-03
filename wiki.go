@@ -166,29 +166,6 @@ func makeSearchHandler(fn navFunc, s storage) http.HandlerFunc {
 	}
 }
 
-func redirectHandler(c Config) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		host := r.Host
-		var port string
-		hostparts := strings.Split(host, ":")
-		if len(hostparts) == 2 {
-			host = hostparts[0]
-			port = strconv.Itoa(c.HTTPSPort)
-		}
-		target := "https://" + host
-		if len(port) > 0 {
-			target += ":" + port
-
-		}
-		target += r.URL.Path
-		if len(r.URL.RawQuery) > 0 {
-			target += "?" + r.URL.RawQuery
-		}
-		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
-
-	}
-}
-
 func simpleHandler(page string, fn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		renderTemplate(w, page, fn(s))
@@ -301,8 +278,6 @@ func main() {
 
 		log.SetOutput(f)
 	}
-
-	config.LoadCookieKey()
 
 	wikiDir = config.WikiDir
 	if !strings.HasSuffix(wikiDir, "/") {
