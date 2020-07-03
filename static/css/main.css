@@ -45,12 +45,6 @@ td {
     background: aliceblue no-repeat;
 }
 
-#logout {
-	position: fixed;
-	bottom: 1em;
-	right: 1em;
-}
-
 #top-edit {
     float: right;
 }

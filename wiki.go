@@ -14,7 +14,6 @@ import (
 
 	"strconv"
 
-	"github.com/justinas/alice" // Middleware chaining
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 )
@@ -152,7 +151,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	renderTemplate(w, "edit", p)
 }
 
-func makeSearchHandler(fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
+func makeSearchHandler(fn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		term := r.URL.Query().Get("term") // Get the search term
 		if len(term) == 0 {
@@ -190,7 +189,7 @@ func redirectHandler(c Config) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func simpleHandler(page string, fn navFunc, s storage) func(http.ResponseWriter, *http.Request) {
+func simpleHandler(page string, fn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		renderTemplate(w, page, fn(s))
 	}
@@ -226,7 +225,6 @@ var templates = template.Must(template.ParseFiles(
 	"views/view.html",
 	"views/pub.html",
 	"views/pubhome.html",
-	"views/login.html",
 	"views/home.html",
 	"views/search.html",
 	"views/index.html",
@@ -306,8 +304,6 @@ func main() {
 
 	config.LoadCookieKey()
 
-	auth := NewAuth(*config, persistUsers)
-
 	wikiDir = config.WikiDir
 	if !strings.HasSuffix(wikiDir, "/") {
 		wikiDir = wikiDir + "/"
@@ -320,43 +316,18 @@ func main() {
 	os.Mkdir(config.WikiDir, 0755)
 	os.Mkdir(config.WikiDir+"tags", 0755)
 
-	authHandlers := alice.New(loggingHandler, auth.validate)
-	noauthHandlers := alice.New(loggingHandler)
-
 	httpmux := http.NewServeMux()
-	httpsmux := httpmux
-	// setup wiki on https
-	if config.UseHTTPS {
-		httpsmux = http.NewServeMux()
-	}
 
 	fstore := fileStorage{tagDir}
 
-	httpsmux.Handle("/wiki", authHandlers.ThenFunc(simpleHandler("home", getNav, fstore)))
-	httpsmux.Handle("/wiki/login/", noauthHandlers.ThenFunc(auth.loginHandler))
-	httpsmux.Handle("/wiki/register/", noauthHandlers.ThenFunc(auth.registerHandler))
-	httpsmux.Handle("/wiki/logout/", authHandlers.ThenFunc(logoutHandler))
-	httpsmux.Handle("/wiki/search/", authHandlers.ThenFunc(makeSearchHandler(getNav, fstore)))
-	httpsmux.Handle("/wiki/view/", authHandlers.ThenFunc(makeHandler(viewHandler, getNav, fstore)))
-	httpsmux.Handle("/wiki/edit/", authHandlers.ThenFunc(makeHandler(editHandler, getNav, fstore)))
-	httpsmux.Handle("/wiki/save/", authHandlers.ThenFunc(processSave(saveHandler, fstore)))
-	httpsmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
-	httpsmux.Handle("/pub/", noauthHandlers.ThenFunc(makePubHandler(pubHandler, getNav, fstore)))
-	httpsmux.Handle("/pub", noauthHandlers.ThenFunc(simpleHandler("pubhome", getPubNav, fstore)))
-	httpsmux.Handle("/api", noauthHandlers.ThenFunc(apiHandler(innerAPIHandler, fstore)))
-
-	if config.UseHTTPS {
-		// Any routes that duplicate the http routing are only done here
-		httpsmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-		go http.ListenAndServeTLS(
-			":"+strconv.Itoa(config.HTTPSPort),
-			config.CertPath,
-			config.KeyPath,
-			httpsmux)
-
-		httpmux.HandleFunc("/wiki", redirectHandler(*config))
-		httpsmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
-	}
+	httpmux.Handle("/wiki", loggingHandler(simpleHandler("home", getNav, fstore)))
+	httpmux.Handle("/wiki/search/", loggingHandler(makeSearchHandler(getNav, fstore)))
+	httpmux.Handle("/wiki/view/", loggingHandler(makeHandler(viewHandler, getNav, fstore)))
+	httpmux.Handle("/wiki/edit/", loggingHandler(makeHandler(editHandler, getNav, fstore)))
+	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
+	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
+	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
+	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))
 
 	// Listen for normal traffic against root
 	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
