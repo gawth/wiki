@@ -9,5 +9,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.2
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/thanhpk/randstr v1.0.4
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 )

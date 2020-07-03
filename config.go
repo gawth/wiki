@@ -2,12 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/thanhpk/randstr"
 )
 
 // Config object loaded from disk at startup
@@ -50,7 +51,8 @@ func LoadConfig() (*Config, error) {
 	config.Logfile = getenv("LOGFILE", config.Logfile)
 	config.EncryptionKey = getenv("ENCRYPTIONKEY", config.EncryptionKey)
 	if len(config.EncryptionKey) == 0 {
-		return nil, errors.New("Must set a valid, 32 char Encryption Key")
+		config.EncryptionKey = randstr.String(32)
+		fmt.Printf("Generated EncryptionKey '%v' be sure to add to your config", config.EncryptionKey)
 	}
 
 	// Make sure the path ends with a /
