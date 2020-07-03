@@ -46,6 +46,9 @@ func getWikiList(base, path string) []wikiNav {
 		if info.IsDir() && contains(info.Name(), specialDir) {
 			continue
 		}
+		if strings.HasPrefix(info.Name(), ".") {
+			continue
+		}
 		// Ignore anything that isnt an md file
 		if strings.HasSuffix(info.Name(), ".md") {
 			tmp := wikiNav{
