@@ -5,6 +5,10 @@
     font-family: Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif;
 }
 
+#editbutton, #deletebutton {
+	display: inline-block;
+}
+
 .wikitag {
     background: #9d99bf;
     padding: 8px;

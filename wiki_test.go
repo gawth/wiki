@@ -102,3 +102,26 @@ func TestSearchHandler(t *testing.T) {
 		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
 	}
 }
+func TestDeletehHandler(t *testing.T) {
+	deletecalled := 0
+	stubrec := func(f string) {
+		deletecalled++
+	}
+	s := stubStorage{loggerFunc: stubrec}
+	p := wikiPage{basePage: basePage{Title: "test"}}
+	req := httptest.NewRequest("POST", "http://localhost/wiki/delete/test", nil)
+	w := httptest.NewRecorder()
+
+	deleteHandler(w, req, &p, &s)
+
+	resp := w.Result()
+
+	// When we get a delete we redirect to home page...
+	if resp.StatusCode != 302 {
+		t.Errorf("Failed to get a 302 response, got %v", resp.StatusCode)
+	}
+	// Expecting two calls to delete file - the wiki file and the tags file
+	if deletecalled != 2 {
+		t.Errorf("Expected delete to be called %v but was called %v", 2, deletecalled)
+	}
+}

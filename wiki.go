@@ -197,6 +197,26 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 	return r.FormValue("wikitags")
 }
 
+func deleteHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
+
+	filename := getWikiFilename(wikiDir, p.Title)
+	log.Printf("Gonna delete : %v", filename)
+
+	if err := s.deleteFile(filename); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tagsfile := getWikiTagsFilename(p.Title)
+	log.Printf("and tags to delete : %v", tagsfile)
+	if err := s.deleteFile(tagsfile); err != nil && !os.IsNotExist(err) {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/wiki", http.StatusFound)
+
+	return
+}
+
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
 	"views/view.html",
@@ -215,7 +235,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search)/([a-zA-Z0-9\\.\\-_ /]*)$")
+var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search|delete)/([a-zA-Z0-9\\.\\-_ /]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -300,6 +320,7 @@ func main() {
 	httpmux.Handle("/wiki/view/", loggingHandler(makeHandler(viewHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/edit/", loggingHandler(makeHandler(editHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
+	httpmux.Handle("/wiki/delete/", loggingHandler(makeHandler(deleteHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))

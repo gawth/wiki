@@ -6,12 +6,20 @@ type stubStorage struct {
 	GetTagWikisFunc func(string) Tag
 	getPageFunc     func(*wikiPage) (*wikiPage, error)
 	storeFileFunc   func(string, []byte) error
+	loggerFunc      func(string)
+}
+
+func (ss *stubStorage) logit(method string) {
+	if ss.loggerFunc != nil {
+		ss.loggerFunc(method)
+	}
 }
 
 func (ss *stubStorage) storeFile(name string, content []byte) error {
 	return ss.storeFileFunc(name, content)
 }
 func (ss *stubStorage) deleteFile(name string) error {
+	ss.logit("deleteFile")
 	return nil
 }
 
