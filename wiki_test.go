@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -103,9 +104,12 @@ func TestSearchHandler(t *testing.T) {
 	}
 }
 func TestDeletehHandler(t *testing.T) {
-	deletecalled := 0
+	called := 0
 	stubrec := func(f string) {
-		deletecalled++
+		if f != "deleteFile" {
+			t.Fatalf("Expected deleteFile but got: %v", f)
+		}
+		called++
 	}
 	s := stubStorage{loggerFunc: stubrec}
 	p := wikiPage{basePage: basePage{Title: "test"}}
@@ -121,7 +125,44 @@ func TestDeletehHandler(t *testing.T) {
 		t.Errorf("Failed to get a 302 response, got %v", resp.StatusCode)
 	}
 	// Expecting two calls to delete file - the wiki file and the tags file
-	if deletecalled != 2 {
-		t.Errorf("Expected delete to be called %v but was called %v", 2, deletecalled)
+	if called != 2 {
+		t.Errorf("Expected delete to be called %v but was called %v", 2, called)
+	}
+}
+func TestMovehHandler(t *testing.T) {
+	called := 0
+	stubrec := func(f string) {
+		if f != "moveFile" {
+			t.Fatalf("Expected moveFile but got: %v", f)
+		}
+		called++
+	}
+	s := stubStorage{loggerFunc: stubrec}
+	p := wikiPage{basePage: basePage{Title: "test"}}
+	form := url.Values{}
+	form.Add("to", "newtest")
+	req := httptest.NewRequest("POST", "http://localhost/wiki/move/test", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+
+	moveHandler(w, req, &p, &s)
+
+	resp := w.Result()
+
+	// Should redirect to the new URL
+	if resp.StatusCode != 302 {
+		t.Errorf("Failed to get a 302 response, got %v", resp.StatusCode)
+	}
+	url, err := resp.Location()
+	if err != nil {
+		t.Errorf("Got error back from response URL check: %v", err)
+	}
+	if url.Path != "/wiki/newtest" {
+		t.Errorf("Expected /wiki/newtest but got %v from 302", url.Path)
+	}
+	// Expecting two calls to - the wiki file and the tags file
+	if called != 2 {
+		t.Errorf("Expected storage  to be called %v but was called %v", 2, called)
 	}
 }

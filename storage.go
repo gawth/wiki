@@ -16,6 +16,7 @@ import (
 type storage interface {
 	storeFile(name string, content []byte) error
 	deleteFile(name string) error
+	moveFile(from, to string) error
 	getPublicPages() []string
 	getPage(p *wikiPage) (*wikiPage, error)
 	searchPages(root, query string) []string
@@ -58,6 +59,12 @@ func (fs fileStorage) deleteFile(name string) error {
 		return err
 	}
 
+	return nil
+}
+func (fs fileStorage) moveFile(from, to string) error {
+	if err := os.Rename(from, to); err != nil {
+		return err
+	}
 	return nil
 }
 

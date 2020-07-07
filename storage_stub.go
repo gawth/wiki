@@ -22,6 +22,10 @@ func (ss *stubStorage) deleteFile(name string) error {
 	ss.logit("deleteFile")
 	return nil
 }
+func (ss *stubStorage) moveFile(from, to string) error {
+	ss.logit("moveFile")
+	return nil
+}
 
 func (ss *stubStorage) getPublicPages() []string {
 	return []string{}

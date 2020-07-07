@@ -216,6 +216,32 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storag
 
 	return
 }
+func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
+
+	from := getWikiFilename(wikiDir, p.Title)
+	to := r.FormValue("to")
+	if len(to) == 0 {
+		http.Error(w, "Form param 'to' needs setting", http.StatusBadRequest)
+	}
+	tofile := getWikiFilename(wikiDir, to)
+
+	log.Printf("Gonna move : %v to %v", from, tofile)
+
+	if err := s.moveFile(from, tofile); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tagsfile := getWikiTagsFilename(p.Title)
+	totags := getWikiTagsFilename(to)
+	log.Printf("and tags to move : %v to %v", tagsfile, totags)
+	if err := s.moveFile(tagsfile, totags); err != nil && !os.IsNotExist(err) {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/wiki/view/"+to, http.StatusFound)
+
+	return
+}
 
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
@@ -235,7 +261,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search|delete)/([a-zA-Z0-9\\.\\-_ /]*)$")
+var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search|delete|move)/([a-zA-Z0-9\\.\\-_ /]*)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -321,6 +347,7 @@ func main() {
 	httpmux.Handle("/wiki/edit/", loggingHandler(makeHandler(editHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
 	httpmux.Handle("/wiki/delete/", loggingHandler(makeHandler(deleteHandler, getNav, fstore)))
+	httpmux.Handle("/wiki/move/", loggingHandler(makeHandler(moveHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))
