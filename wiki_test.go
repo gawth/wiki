@@ -158,8 +158,8 @@ func TestMovehHandler(t *testing.T) {
 	if err != nil {
 		t.Errorf("Got error back from response URL check: %v", err)
 	}
-	if url.Path != "/wiki/newtest" {
-		t.Errorf("Expected /wiki/newtest but got %v from 302", url.Path)
+	if url.Path != "/wiki/view/newtest" {
+		t.Errorf("Expected /wiki/view/newtest but got %v from 302", url.Path)
 	}
 	// Expecting two calls to - the wiki file and the tags file
 	if called != 2 {
