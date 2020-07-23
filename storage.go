@@ -238,6 +238,10 @@ func (fs *fileStorage) IndexRawFiles(path, fileExtension string, existing TagInd
 
 }
 
+func genID(base, name string) string {
+	return strings.ReplaceAll(base+name, "/", "-")
+}
+
 // IndexWikiFiles will crawl through picking out files that conform to requirements for wiki entries
 // This includes md and pdf files.
 // Any hidden (dot) files are skipped
@@ -258,18 +262,22 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 		}
 		// Ignore anything that isnt an md file
 		if strings.HasSuffix(info.Name(), ".md") {
+			name := strings.TrimSuffix(info.Name(), ".md")
 			tmp := wikiNav{
-				Name: strings.TrimSuffix(info.Name(), ".md"),
-				URL:  base + "/" + strings.TrimSuffix(info.Name(), ".md"),
+				Name: name,
+				URL:  base + "/" + name,
 				Mod:  info.ModTime(),
+				ID:   genID(base, name),
 			}
 			names = append(names, tmp)
 		}
 		if strings.HasSuffix(info.Name(), ".txt") {
+			name := strings.TrimSuffix(info.Name(), ".txt")
 			tmp := wikiNav{
-				Name: strings.TrimSuffix(info.Name(), ".txt"),
-				URL:  base + "/" + strings.TrimSuffix(info.Name(), ".txt"),
+				Name: name,
+				URL:  base + "/" + name,
 				Mod:  info.ModTime(),
+				ID:   genID(base, name),
 			}
 			names = append(names, tmp)
 		}
@@ -278,6 +286,7 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 				Name: info.Name(),
 				URL:  base + "/" + info.Name(),
 				Mod:  info.ModTime(),
+				ID:   genID(base, info.Name()),
 			}
 			names = append(names, tmp)
 		}
@@ -287,6 +296,7 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 				Name:  info.Name(),
 				URL:   newbase,
 				IsDir: true,
+				ID:    genID(base, info.Name()),
 			}
 			tmp.SubNav = fs.IndexWikiFiles(newbase, path+"/"+info.Name())
 			if len(tmp.SubNav) > 0 {

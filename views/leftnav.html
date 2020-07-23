@@ -2,8 +2,8 @@
 {{define "submenu"}}
 	{{if .IsDir}}
 	<li class="has-children">
-		<input type="checkbox" name="sub-group-{{.Name}}" id="sub-group-{{.Name}}">
-		<label for="sub-group-{{.Name}}">{{.Name}}</label>
+		<input type="checkbox" name="sub-group-{{.ID}}" id="sub-group-{{.ID}}">
+		<label for="sub-group-{{.ID}}">{{.Name}}</label>
 		<!-- -->
 		<ul class="">
 			{{range .SubNav}}
