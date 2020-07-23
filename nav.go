@@ -1,10 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
-	"sort"
-	"strings"
 	"time"
 )
 
@@ -38,59 +35,9 @@ func contains(target string, in []string) bool {
 	return false
 }
 
-func getWikiList(base, path string) []wikiNav {
-	files, err := ioutil.ReadDir(path)
-	checkErr(err)
-
-	var names []wikiNav
-	for _, info := range files {
-		if info.IsDir() && contains(info.Name(), specialDir) {
-			continue
-		}
-		if strings.HasPrefix(info.Name(), ".") {
-			continue
-		}
-		// Ignore anything that isnt an md file
-		if strings.HasSuffix(info.Name(), ".md") {
-			tmp := wikiNav{
-				Name: strings.TrimSuffix(info.Name(), ".md"),
-				URL:  base + "/" + strings.TrimSuffix(info.Name(), ".md"),
-				Mod:  info.ModTime(),
-			}
-			names = append(names, tmp)
-		}
-		if strings.HasSuffix(info.Name(), ".pdf") {
-			tmp := wikiNav{
-				Name: info.Name(),
-				URL:  base + "/" + info.Name(),
-				Mod:  info.ModTime(),
-			}
-			names = append(names, tmp)
-		}
-		if info.IsDir() {
-			newbase := base + "/" + info.Name()
-			tmp := wikiNav{
-				Name:  info.Name(),
-				URL:   newbase,
-				IsDir: true,
-			}
-			tmp.SubNav = getWikiList(newbase, path+"/"+info.Name())
-			if len(tmp.SubNav) > 0 {
-				// Override the dir's mod time with the first entry
-				tmp.Mod = tmp.SubNav[0].Mod
-			}
-			names = append(names, tmp)
-		}
-	}
-
-	sort.Sort(sort.Reverse(byModTime(names)))
-	return names
-
-}
-
 func getNav(s storage) nav {
 	start := time.Now()
-	wikis := getWikiList("", wikiDir)
+	wikis := s.IndexWikiFiles("", wikiDir)
 	loadwikis := time.Now()
 	tags := s.IndexTags(tagDir)
 	loadtags := time.Now()

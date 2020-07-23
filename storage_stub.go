@@ -51,3 +51,6 @@ func (ss *stubStorage) IndexRawFiles(path, fileExtension string, existing TagInd
 func (ss *stubStorage) GetTagWikis(tag string) Tag {
 	return ss.GetTagWikisFunc(tag)
 }
+func (ss *stubStorage) IndexWikiFiles(base, path string) []wikiNav {
+	return nil
+}

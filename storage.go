@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -24,6 +25,7 @@ type storage interface {
 	IndexTags(path string) TagIndex
 	GetTagWikis(tag string) Tag
 	IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex
+	IndexWikiFiles(base, path string) []wikiNav
 }
 
 type fileStorage struct {
@@ -199,8 +201,6 @@ func (fs *fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 func (fs *fileStorage) IndexTags(path string) TagIndex {
 	index := TagIndex(make(map[string]Tag))
 
-	log.Println("Tag base folder :" + path)
-
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
 		if !info.IsDir() && !strings.HasPrefix(info.Name(), ".") {
 			contents, err := ioutil.ReadFile(subpath)
@@ -235,5 +235,69 @@ func (fs *fileStorage) IndexRawFiles(path, fileExtension string, existing TagInd
 	checkErr(err)
 
 	return existing
+
+}
+
+// IndexWikiFiles will crawl through picking out files that conform to requirements for wiki entries
+// This includes md and pdf files.
+// Any hidden (dot) files are skipped
+// Folders are included as part of the path
+// Mod time is used to order the files
+func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
+	files, err := ioutil.ReadDir(path)
+	checkErr(err)
+
+	var names []wikiNav
+	for _, info := range files {
+
+		if info.IsDir() && contains(info.Name(), specialDir) {
+			continue
+		}
+		if strings.HasPrefix(info.Name(), ".") {
+			continue
+		}
+		// Ignore anything that isnt an md file
+		if strings.HasSuffix(info.Name(), ".md") {
+			tmp := wikiNav{
+				Name: strings.TrimSuffix(info.Name(), ".md"),
+				URL:  base + "/" + strings.TrimSuffix(info.Name(), ".md"),
+				Mod:  info.ModTime(),
+			}
+			names = append(names, tmp)
+		}
+		if strings.HasSuffix(info.Name(), ".txt") {
+			tmp := wikiNav{
+				Name: strings.TrimSuffix(info.Name(), ".txt"),
+				URL:  base + "/" + strings.TrimSuffix(info.Name(), ".txt"),
+				Mod:  info.ModTime(),
+			}
+			names = append(names, tmp)
+		}
+		if strings.HasSuffix(info.Name(), ".pdf") {
+			tmp := wikiNav{
+				Name: info.Name(),
+				URL:  base + "/" + info.Name(),
+				Mod:  info.ModTime(),
+			}
+			names = append(names, tmp)
+		}
+		if info.IsDir() {
+			newbase := base + "/" + info.Name()
+			tmp := wikiNav{
+				Name:  info.Name(),
+				URL:   newbase,
+				IsDir: true,
+			}
+			tmp.SubNav = fs.IndexWikiFiles(newbase, path+"/"+info.Name())
+			if len(tmp.SubNav) > 0 {
+				// Override the dir's mod time with the first entry
+				tmp.Mod = tmp.SubNav[0].Mod
+			}
+			names = append(names, tmp)
+		}
+	}
+
+	sort.Sort(sort.Reverse(byModTime(names)))
+	return names
 
 }
