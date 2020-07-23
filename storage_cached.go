@@ -30,8 +30,19 @@ func (cs *cachedStorage) IndexRawFiles(path, fileExtension string, existing TagI
 	return cs.cachedRawFiles
 }
 
-func (cs *cachedStorage) storeFile(name string, content []byte) error {
+func (cs *cachedStorage) clearCache() {
 	cs.cachedRawFiles = nil
 	cs.cachedTagIndex = nil
+}
+func (cs *cachedStorage) storeFile(name string, content []byte) error {
+	cs.clearCache()
 	return cs.fileStorage.storeFile(name, content)
+}
+func (cs *cachedStorage) deleteFile(name string) error {
+	cs.clearCache()
+	return cs.fileStorage.deleteFile(name)
+}
+func (cs *cachedStorage) moveFile(from, to string) error {
+	cs.clearCache()
+	return cs.fileStorage.moveFile(from, to)
 }
