@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -88,8 +89,19 @@ func getWikiList(base, path string) []wikiNav {
 }
 
 func getNav(s storage) nav {
+	start := time.Now()
+	wikis := getWikiList("", wikiDir)
+	loadwikis := time.Now()
+	tags := s.IndexTags(tagDir)
+	loadtags := time.Now()
+	indexedTags := s.IndexRawFiles(wikiDir, "PDF", tags)
+	indexTags := time.Now()
+
+	log.Printf("[nav] wikis %v", loadwikis.Sub(start))
+	log.Printf("[nav] tags %v", loadtags.Sub(loadwikis))
+	log.Printf("[nav] idxtags %v", indexTags.Sub(loadtags))
 	return nav{
-		Wikis: getWikiList("", wikiDir),
-		Tags:  s.IndexRawFiles(wikiDir, "PDF", s.IndexTags(tagDir)),
+		Wikis: wikis,
+		Tags:  indexedTags,
 	}
 }
