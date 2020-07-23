@@ -34,7 +34,6 @@ func LoadConfig() (*Config, error) {
 	path := "config.json"
 	config := Config{
 		WikiDir:  "./wikidir",
-		Logfile:  "defaultwiki.log",
 		HTTPPort: 8080,
 	}
 	conf, err := ioutil.ReadFile(path)
