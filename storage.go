@@ -40,7 +40,7 @@ func createDir(filename string) error {
 	}
 	return nil
 }
-func (fs fileStorage) storeFile(name string, content []byte) error {
+func (fs *fileStorage) storeFile(name string, content []byte) error {
 	err := createDir(name)
 	if err != nil {
 		return err
@@ -54,14 +54,14 @@ func (fs fileStorage) storeFile(name string, content []byte) error {
 	return nil
 }
 
-func (fs fileStorage) deleteFile(name string) error {
+func (fs *fileStorage) deleteFile(name string) error {
 	if err := os.Remove(name); err != nil {
 		return err
 	}
 
 	return nil
 }
-func (fs fileStorage) moveFile(from, to string) error {
+func (fs *fileStorage) moveFile(from, to string) error {
 	if err := os.Rename(from, to); err != nil {
 		return err
 	}
@@ -83,11 +83,11 @@ func indexPubPages(path string) []string {
 	return results
 }
 
-func (fs fileStorage) getPublicPages() []string {
+func (fs *fileStorage) getPublicPages() []string {
 	return indexPubPages(pubDir)
 }
 
-func (fs fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
+func (fs *fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	filename := getWikiFilename(wikiDir, p.Title)
 
 	file, err := os.Open(filename)
@@ -139,7 +139,7 @@ func (fs fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	return p, nil
 }
 
-func (fs fileStorage) searchPages(root string, query string) []string {
+func (fs *fileStorage) searchPages(root string, query string) []string {
 	var wg sync.WaitGroup
 	results := make(chan string)
 
@@ -180,7 +180,7 @@ func readFile(wg *sync.WaitGroup, name string, path string, query string, result
 	}
 }
 
-func (fs fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
+func (fs *fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 	filename := getPDFFilename(wikiDir, p.Title)
 
 	file, err := os.Open(filename)
@@ -196,7 +196,7 @@ func (fs fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 
 // IndexTags reads tags files from the file system and constructs
 // an index
-func (fs fileStorage) IndexTags(path string) TagIndex {
+func (fs *fileStorage) IndexTags(path string) TagIndex {
 	index := TagIndex(make(map[string]Tag))
 
 	log.Println("Tag base folder :" + path)
@@ -217,13 +217,13 @@ func (fs fileStorage) IndexTags(path string) TagIndex {
 
 	return index
 }
-func (fs fileStorage) GetTagWikis(tag string) Tag {
+func (fs *fileStorage) GetTagWikis(tag string) Tag {
 	ti := fs.IndexTags(fs.TagDir)
 	return ti[tag]
 }
 
 // IndexRawFiles adds in tags for a file extension tag
-func (fs fileStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
+func (fs *fileStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
 
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
 		if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(fileExtension)) {

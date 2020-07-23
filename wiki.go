@@ -339,7 +339,8 @@ func main() {
 
 	httpmux := http.NewServeMux()
 
-	fstore := fileStorage{tagDir}
+	cached := newCachedStorage(fileStorage{tagDir}, wikiDir, tagDir)
+	fstore := &cached
 
 	httpmux.Handle("/wiki", loggingHandler(simpleHandler("home", getNav, fstore)))
 	httpmux.Handle("/wiki/search/", loggingHandler(makeSearchHandler(getNav, fstore)))
