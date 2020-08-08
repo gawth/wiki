@@ -1,5 +1,15 @@
+
+body, input, textarea, legend {
+    background: #191818;
+    color: #777;
+}
+.pure-form legend {
+    color: #777;
+}
+
+	
+
 .wikiBody {
-    background: #fff;
     padding: 5px;
     text-align: justify;
     font-family: Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif;
@@ -28,7 +38,6 @@ table {
 }
 
 th {
-    color: #6D929B;
     border-right: 1px solid #C1DAD7;
     border-bottom: 1px solid #C1DAD7;
     border-top: 1px solid #C1DAD7;
@@ -39,7 +48,6 @@ th {
 }
 
 td {
-    color: #6D929B;
     border-right: 1px solid #C1DAD7;
     border-bottom: 1px solid #C1DAD7;
     border-top: 1px solid #C1DAD7;
