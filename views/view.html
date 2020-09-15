@@ -39,6 +39,13 @@
 						class="pure-button pure-button-primary">move</button>
 				</fieldset>
 			</form>
+            <div class="index">
+                <p>
+                    {{range .Index}}
+                    <div class="keyword">{{.}}</div>
+                    {{end}}
+                </p>
+            </div>
         </section>
         {{template "footer"}}
     </div>

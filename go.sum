@@ -1,3 +1,5 @@
+github.com/afjoseph/RAKE.Go v0.0.0-20191109090147-068a9e43b194 h1:OMSVCpHU6LWeMZ0XpsSjVO2RpteALyxq30lCjJpjkKQ=
+github.com/afjoseph/RAKE.Go v0.0.0-20191109090147-068a9e43b194/go.mod h1:2la4gJrUsAnvpwFANd3XWRy9aCbP/fGAOlN0pbhX/EI=
 github.com/aws/aws-sdk-go v1.29.34 h1:yrzwfDaZFe9oT4AmQeNNunSQA7c0m2chz0B43+bJ1ok=
 github.com/aws/aws-sdk-go v1.29.34/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
