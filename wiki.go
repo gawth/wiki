@@ -156,6 +156,20 @@ func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 
 	renderTemplate(w, "view", p)
 }
+func todoHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
+	p, err := convertMarkdown(s.getPage(p))
+	if err != nil {
+		p, err = s.checkForPDF(p)
+		if err != nil {
+			http.Redirect(w, r, "/wiki/edit/"+p.Title, http.StatusFound)
+			return
+		}
+	} else {
+		p.Body = template.HTML(parseWikiWords([]byte(p.Body)))
+	}
+
+	renderTemplate(w, "view", p)
+}
 
 func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 	p, _ = s.getPage(p)
@@ -224,8 +238,6 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storag
 		return
 	}
 	http.Redirect(w, r, "/wiki", http.StatusFound)
-
-	return
 }
 func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 
@@ -250,8 +262,6 @@ func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 		return
 	}
 	http.Redirect(w, r, "/wiki/view/"+to, http.StatusFound)
-
-	return
 }
 
 var templates = template.Must(template.ParseFiles(
@@ -260,6 +270,7 @@ var templates = template.Must(template.ParseFiles(
 	"views/pub.html",
 	"views/pubhome.html",
 	"views/home.html",
+	"views/todo.html",
 	"views/search.html",
 	"views/index.html",
 	"views/footer.html",
@@ -272,7 +283,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/wiki/(edit|save|view|search|delete|move)/([a-zA-Z0-9\\.\\-_ /]*)$")
+var validPath = regexp.MustCompile(`^/wiki/(edit|save|view|search|delete|move|todo)/([a-zA-Z0-9\.\-_ /]*)$`)
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -357,6 +368,7 @@ func main() {
 	httpmux.Handle("/wiki/search/", loggingHandler(makeSearchHandler(getNav, fstore)))
 	httpmux.Handle("/wiki/view/", loggingHandler(makeHandler(viewHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/edit/", loggingHandler(makeHandler(editHandler, getNav, fstore)))
+	httpmux.Handle("/wiki/todo/", loggingHandler(simpleHandler("todo", getNav, fstore)))
 	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
 	httpmux.Handle("/wiki/delete/", loggingHandler(makeHandler(deleteHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/move/", loggingHandler(makeHandler(moveHandler, getNav, fstore)))

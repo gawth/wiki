@@ -1,0 +1,37 @@
+
+{{define "todolist"}}
+	{{if .IsDir}}
+	<li class="has-children">
+		<input type="checkbox" name="todo-group-{{.ID}}" id="todo-group-{{.ID}}">
+		<label for="todo-group-{{.ID}}">{{.Name}}</label>
+		<!-- -->
+		<ul class="">
+			{{range .SubNav}}
+			{{template "todolist" .}}
+			<!-- -->
+			{{end}}
+		</ul>
+	</li>
+	{{else}}
+	<li class=""><a href="/wiki/view{{.URL}}" class="">{{.Name}}</a></li>
+	{{end}}
+{{end}}
+
+{{template "header" "Wiki"}}
+
+<body>
+
+    <div class="content">
+        <h1> Todos </h1>
+
+		<div id="todos">
+				{{range .Wikis}}
+					{{template "todolist" .}}
+				{{end}}
+		</div>
+        {{template "footer"}}
+    </div>
+    {{template "leftnav" .}}
+</body>
+
+</html>

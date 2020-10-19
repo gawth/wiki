@@ -25,6 +25,20 @@ $(document).ready(function() {
     $.each(checkboxValues, function(key, value) {
       $("#" + key).prop('checked', value);
     });
+
+    var todoValues = JSON.parse(localStorage.getItem('todoValues')) || {};
+    var $todos = $("#todos :checkbox");
+
+    $todos.on("change", function(){
+      $todos.each(function(){
+          todoValues[this.id] = this.checked;
+        });
+      localStorage.setItem("todoValues", JSON.stringify(todoValues));
+    });
+
+    $.each(todoValues, function(key, value) {
+      $("#" + key).prop('checked', value);
+    });
   });
 
 
