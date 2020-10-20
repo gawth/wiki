@@ -13,7 +13,9 @@
 		</ul>
 	</li>
 	{{else}}
-	<li class=""><a href="/wiki/view{{.URL}}" class="">{{.Name}}</a></li>
+	<li class=""><a href="/wiki/view{{.URL}}" class="">{{.Name}}</a>
+		<p>{{.Summary}}</p>
+	</li>
 	{{end}}
 {{end}}
 
@@ -25,9 +27,11 @@
         <h1> Todos </h1>
 
 		<div id="todos">
+			<ul class="cd-accordion-menu">
 				{{range .Wikis}}
 					{{template "todolist" .}}
 				{{end}}
+			</ul>
 		</div>
         {{template "footer"}}
     </div>

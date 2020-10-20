@@ -264,20 +264,22 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 		if strings.HasSuffix(info.Name(), ".md") {
 			name := strings.TrimSuffix(info.Name(), ".md")
 			tmp := wikiNav{
-				Name: name,
-				URL:  base + "/" + name,
-				Mod:  info.ModTime(),
-				ID:   genID(base, name),
+				Name:    name,
+				URL:     base + "/" + name,
+				Mod:     info.ModTime(),
+				ID:      genID(base, name),
+				Summary: "This is a test summary for markdown",
 			}
 			names = append(names, tmp)
 		}
 		if strings.HasSuffix(info.Name(), ".txt") {
 			name := strings.TrimSuffix(info.Name(), ".txt")
 			tmp := wikiNav{
-				Name: name,
-				URL:  base + "/" + name,
-				Mod:  info.ModTime(),
-				ID:   genID(base, name),
+				Name:    name,
+				URL:     base + "/" + name,
+				Mod:     info.ModTime(),
+				ID:      genID(base, name),
+				Summary: "This is a test summary for text file",
 			}
 			names = append(names, tmp)
 		}

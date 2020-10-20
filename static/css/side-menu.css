@@ -442,7 +442,8 @@ Main Components
 .cd-accordion-menu ul label,
 .cd-accordion-menu ul a {
     /* background: #35383d; */
-    box-shadow: inset 0 -1px #41444a;
+    /* This was used to be a line around an entry in the menu...didn't like it...
+	 * box-shadow: inset 0 -1px #41444a; (/)
     /* padding-left: 82px; */
 }
 
@@ -515,8 +516,9 @@ Main Components
         left: 77px;
     }
     .cd-accordion-menu ul ul label,
+    .cd-accordion-menu ul ul p,
     .cd-accordion-menu ul ul a {
-        padding-left: 30px;
+        padding-left: 20px;
     }
     .cd-accordion-menu ul ul label::before {
         left: 72px;

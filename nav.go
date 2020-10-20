@@ -6,12 +6,13 @@ import (
 )
 
 type wikiNav struct {
-	Name   string
-	URL    string
-	ID     string
-	IsDir  bool
-	SubNav []wikiNav
-	Mod    time.Time
+	Name    string
+	URL     string
+	ID      string
+	IsDir   bool
+	SubNav  []wikiNav
+	Mod     time.Time
+	Summary string
 }
 type nav struct {
 	Pages []string
