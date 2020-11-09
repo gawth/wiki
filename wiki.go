@@ -115,16 +115,6 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 		return page, err
 	}
 
-	// Used to run rake which was a summarizer for the page...however, it was a bit
-	// rubbish so have abandoned it.
-	// index := rake.RunRake(string(page.Body))
-	// for _, v := range index {
-	// 	if v.Value < 4 {
-	// 		break
-	// 	}
-	// 	page.Index = append(page.Index, v.Key)
-	// }
-
 	p := bluemonday.UGCPolicy()
 	p.AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
 
