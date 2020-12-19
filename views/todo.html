@@ -23,19 +23,48 @@
 
 <body>
 
-    <div class="content">
-        <h1> Todos </h1>
 
-		<div id="todos">
-			<ul class="cd-accordion-menu">
-				{{range .Wikis}}
-					{{template "todolist" .}}
-				{{end}}
-			</ul>
-		</div>
+    <div class="content">
+		<section class="todoapp">
+			<header class="header">
+				<h1>todos</h1>
+				<input class="new-todo" placeholder="What needs to be done?" autofocus>
+			</header>
+			<section class="main">
+				<input id="toggle-all" class="toggle-all" type="checkbox">
+				<label for="toggle-all">Mark all as complete</label>
+				<ul class="todo-list"></ul>
+			</section>
+			<footer class="footer">
+				<span class="todo-count"></span>
+				<ul class="filters">
+					<li>
+						<a href="#/" class="selected">All</a>
+					</li>
+					<li>
+						<a href="#/active">Active</a>
+					</li>
+					<li>
+						<a href="#/completed">Completed</a>
+					</li>
+				</ul>
+				<button class="clear-completed">Clear completed</button>
+			</footer>
+		</section>
+
         {{template "footer"}}
     </div>
     {{template "leftnav" .}}
+
+
+	<script src="/static/js/todo/base.js"></script>
+	<script src="/static/js/todo/helpers.js"></script>
+	<script src="/static/js/todo/store.js"></script>
+	<script src="/static/js/todo/model.js"></script>
+	<script src="/static/js/todo/template.js"></script>
+	<script src="/static/js/todo/view.js"></script>
+	<script src="/static/js/todo/controller.js"></script>
+	<script src="/static/js/todo/app.js"></script>
 </body>
 
 </html>
