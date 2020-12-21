@@ -475,7 +475,7 @@ Main Components
 
 .cd-accordion-menu ul ul label,
 .cd-accordion-menu ul ul a {
-    padding-left: 100px;
+    padding-left: 10px;
 }
 
 .cd-accordion-menu ul ul label::before {
@@ -489,7 +489,7 @@ Main Components
 
 .cd-accordion-menu ul ul ul label,
 .cd-accordion-menu ul ul ul a {
-    padding-left: 118px;
+    padding-left: 20px;
 }
 
 .cd-accordion-menu ul ul ul label::before {
