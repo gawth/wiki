@@ -168,6 +168,11 @@ appears on the left side of the page.
     color: #fff;
     margin: 0;
 }
+#menu .pure-menu-subheading {
+    font-size: 110%;
+    color: #fff;
+    margin: 0;
+}
 
 
 /* -- Dynamic Button For Responsive Menu -------------------------------------*/
@@ -529,7 +534,7 @@ Main Components
     }
     .cd-accordion-menu ul ul ul label,
     .cd-accordion-menu ul ul ul a {
-        padding-left: 154px;
+        padding-left: 45px;
     }
     .cd-accordion-menu ul ul ul label::before {
         left: 96px;

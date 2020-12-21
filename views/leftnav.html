@@ -19,28 +19,37 @@
 
 {{define "leftnav"}}
 <div id="menu">
-    <a class="pure-menu-heading" href="/wiki">Wikis</a>
     <ul class="cd-accordion-menu">
 
-		{{range .Wikis}}
-			{{template "submenu" .}}
-		{{end}}
-        <!-- -->
-        <!-- -->
-        <li class="pure-menu-heading">Tags</li>
-        {{range $key, $value := .Tags}}
-        <li class="has-children">
-            <input class="tag" type="checkbox" name="sub-group-{{$key}}" id="sub-group-{{$key}}">
-            <label class="tag-label" for="sub-group-{{$key}}">{{$key}}</label>
-            <!-- -->
-            <ul class="">
-                {{range $value.Wikis}}
-                <li class=""> <a href="/wiki/view/{{.}}" class="">{{.}}</a> </li>
-                <!-- -->
-                {{end}}
-            </ul>
-        </li>
-        {{end}}
+		<li class="has-children">
+			<input class="top-level-menu" type="checkbox" name="top-level-menu" id="top-level-menu"/>
+			<label class="pure-menu-heading" for="top-level-menu">Wiki</label>
+			<ul class="">
+				<li>
+					<a class="pure-menu-subheading" href="/wiki">Home</a>
+				</li>
+				{{range .Wikis}}
+					{{template "submenu" .}}
+				{{end}}
+				<!-- -->
+				<!-- -->
+				<li class="pure-menu-heading">Tags</li>
+					{{range $key, $value := .Tags}}
+						<li class="has-children">
+							<input class="tag" type="checkbox" name="sub-group-{{$key}}" id="sub-group-{{$key}}">
+							<label class="tag-label" for="sub-group-{{$key}}">{{$key}}</label>
+							<!-- -->
+							<ul class="">
+								{{range $value.Wikis}}
+								<li class=""> <a href="/wiki/view/{{.}}" class="">{{.}}</a> </li>
+								<!-- -->
+								{{end}}
+							</ul>
+						</li>
+					{{end}}
+				</li>
+			</ul>
+		</li>
     </ul>
 </div>
 
