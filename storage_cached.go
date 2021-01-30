@@ -38,18 +38,25 @@ func (cs *cachedStorage) IndexRawFiles(path, fileExtension string, existing TagI
 	return cs.cachedRawFiles
 }
 
-func (cs *cachedStorage) clearCache() {
+func (cs *cachedStorage) clearCache() error {
 	go cs.rebuildCache()
+	return nil
 }
 func (cs *cachedStorage) storeFile(name string, content []byte) error {
-	cs.clearCache()
-	return cs.fileStorage.storeFile(name, content)
+	if err := cs.fileStorage.storeFile(name, content); err != nil {
+		return err
+	}
+	return cs.clearCache()
 }
 func (cs *cachedStorage) deleteFile(name string) error {
-	cs.clearCache()
-	return cs.fileStorage.deleteFile(name)
+	if err := cs.fileStorage.deleteFile(name); err != nil {
+		return err
+	}
+	return cs.clearCache()
 }
 func (cs *cachedStorage) moveFile(from, to string) error {
-	cs.clearCache()
-	return cs.fileStorage.moveFile(from, to)
+	if err := cs.fileStorage.moveFile(from, to); err != nil {
+		return err
+	}
+	return cs.clearCache()
 }
