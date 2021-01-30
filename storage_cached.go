@@ -19,20 +19,18 @@ func newCachedStorage(fs fileStorage, wd, td string) cachedStorage {
 	return cachedStorage{fs, wd, td, ti, rf, wi}
 }
 
+func (cs *cachedStorage) rebuildCache() {
+	log.Println("[cache] wiki cache rebuild")
+	cs.cachedTagIndex = cs.fileStorage.IndexTags(cs.tagDir)
+	cs.cachedRawFiles = cs.fileStorage.IndexRawFiles(cs.wikiDir, "PDF", cs.cachedTagIndex)
+	cs.cachedWikiIndex = cs.fileStorage.IndexWikiFiles("", cs.wikiDir)
+}
+
 func (cs *cachedStorage) IndexWikiFiles(base, path string) []wikiNav {
-	if cs.cachedWikiIndex == nil {
-		log.Println("[cache] wiki cache rebuild")
-		cs.cachedWikiIndex = cs.fileStorage.IndexWikiFiles("", cs.wikiDir)
-	}
 	return cs.cachedWikiIndex
 }
 
 func (cs *cachedStorage) IndexTags(path string) TagIndex {
-	if cs.cachedTagIndex == nil {
-		log.Println("[cache] tags cache rebuild")
-		cs.cachedTagIndex = cs.fileStorage.IndexTags(cs.tagDir)
-		cs.cachedRawFiles = cs.fileStorage.IndexRawFiles(cs.wikiDir, "PDF", cs.cachedTagIndex)
-	}
 	return cs.cachedTagIndex
 }
 
@@ -41,9 +39,7 @@ func (cs *cachedStorage) IndexRawFiles(path, fileExtension string, existing TagI
 }
 
 func (cs *cachedStorage) clearCache() {
-	cs.cachedRawFiles = nil
-	cs.cachedTagIndex = nil
-	cs.cachedWikiIndex = nil
+	go cs.rebuildCache()
 }
 func (cs *cachedStorage) storeFile(name string, content []byte) error {
 	cs.clearCache()
