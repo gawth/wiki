@@ -166,3 +166,23 @@ func TestMovehHandler(t *testing.T) {
 		t.Errorf("Expected storage  to be called %v but was called %v", 2, called)
 	}
 }
+func TestScrapeHandler(t *testing.T) {
+	reader := strings.NewReader("target=test&url=fred")
+	req := httptest.NewRequest("POST", "http://localhost/wiki/scrape", reader)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	handler := makeScrapeHandler(scrapeHandler)
+	handler(w, req)
+
+	resp := w.Result()
+
+	expectedStatus := 302
+	if resp.StatusCode != expectedStatus {
+		t.Errorf("Failed to get a %v response, got %v", expectedStatus, resp.StatusCode)
+	}
+	expectedLoc := "/wiki/view/test"
+	if resp.Header.Get("Location") != expectedLoc {
+		t.Errorf("Redirect location not correct, expected %v but got %v", expectedLoc, resp.Header.Get("Location"))
+	}
+}

@@ -240,6 +240,12 @@ func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	}
 	http.Redirect(w, r, "/wiki/view/"+to, http.StatusFound)
 }
+func scrapeHandler(w http.ResponseWriter, r *http.Request) {
+	// url := r.FormValue("url")
+	name := r.FormValue("target")
+
+	http.Redirect(w, r, "/wiki/view/"+name, http.StatusFound)
+}
 
 var templates = template.Must(template.ParseFiles(
 	"views/edit.html",
@@ -259,7 +265,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	}
 }
 
-var validPath = regexp.MustCompile(`^/wiki/(edit|save|view|search|delete|move)/([a-zA-Z0-9\.\-_ /]*)$`)
+var validPath = regexp.MustCompile(`^/wiki/(edit|save|view|search|delete|move|scrape)/([a-zA-Z0-9\.\-_ /]*)$`)
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -275,6 +281,11 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage)
 		}
 		p := &wikiPage{basePage: basePage{Title: wword, Nav: navfn(s)}}
 		fn(w, r, p, s)
+	}
+}
+func makeScrapeHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(w, r)
 	}
 }
 
@@ -347,6 +358,7 @@ func main() {
 	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
 	httpmux.Handle("/wiki/delete/", loggingHandler(makeHandler(deleteHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/move/", loggingHandler(makeHandler(moveHandler, getNav, fstore)))
+	httpmux.Handle("/wiki/scrape/", loggingHandler(makeScrapeHandler(scrapeHandler)))
 	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))

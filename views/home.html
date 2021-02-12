@@ -20,6 +20,15 @@
                 <button type="submit" class="pure-button pure-button-primary">Search</button>
             </fieldset>
         </form>
+        <form class="pure-form" action="wiki/scrape/" method="POST">
+            <fieldset>
+                <legend>Download URL</legend>
+                <input type="text" name="target">
+				<label>from URL</label>
+                <input type="text" name="url">
+                <button type="submit" class="pure-button pure-button-primary">Scrape</button>
+            </fieldset>
+        </form>
         <a href="/pub">Public Pages</a>
         <!-- -->
         {{template "footer"}}
