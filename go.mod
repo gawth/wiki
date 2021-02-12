@@ -3,7 +3,7 @@ module github.com/gawth/wiki
 go 1.13
 
 require (
-	github.com/JohannesKaufmann/html-to-markdown v1.2.0 // indirect
+	github.com/JohannesKaufmann/html-to-markdown v1.2.0
 	github.com/PuerkitoBio/goquery v1.6.1 // indirect
 	github.com/afjoseph/RAKE.Go v0.0.0-20191109090147-068a9e43b194
 	github.com/aws/aws-sdk-go v1.29.34

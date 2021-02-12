@@ -166,13 +166,25 @@ func TestMovehHandler(t *testing.T) {
 		t.Errorf("Expected storage  to be called %v but was called %v", 2, called)
 	}
 }
+
+type mdc struct {
+	calledWith string
+}
+
+func (m *mdc) ConvertURL(url string) (string, error) {
+	m.calledWith = url
+	return "converted", nil
+}
+
 func TestScrapeHandler(t *testing.T) {
-	reader := strings.NewReader("target=test&url=fred")
+	url := "fred"
+	reader := strings.NewReader("target=test&url=" + url)
 	req := httptest.NewRequest("POST", "http://localhost/wiki/scrape", reader)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 
-	handler := makeScrapeHandler(scrapeHandler)
+	stubConverter := mdc{}
+	handler := makeScrapeHandler(scrapeHandler, &stubConverter)
 	handler(w, req)
 
 	resp := w.Result()
@@ -184,5 +196,8 @@ func TestScrapeHandler(t *testing.T) {
 	expectedLoc := "/wiki/view/test"
 	if resp.Header.Get("Location") != expectedLoc {
 		t.Errorf("Redirect location not correct, expected %v but got %v", expectedLoc, resp.Header.Get("Location"))
+	}
+	if stubConverter.calledWith != url {
+		t.Errorf("Stub call expect %v but got '%v'", url, stubConverter.calledWith)
 	}
 }

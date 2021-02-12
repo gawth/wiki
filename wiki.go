@@ -14,6 +14,7 @@ import (
 
 	"strconv"
 
+	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 )
@@ -45,6 +46,10 @@ type wikiPage struct {
 type searchPage struct {
 	basePage
 	Results []QueryResults
+}
+
+type mdConverter interface {
+	ConvertURL(string) (string, error)
 }
 
 func checkErr(err error) {
@@ -240,9 +245,11 @@ func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	}
 	http.Redirect(w, r, "/wiki/view/"+to, http.StatusFound)
 }
-func scrapeHandler(w http.ResponseWriter, r *http.Request) {
-	// url := r.FormValue("url")
+func scrapeHandler(w http.ResponseWriter, r *http.Request, mdc mdConverter) {
+	url := r.FormValue("url")
 	name := r.FormValue("target")
+
+	mdc.ConvertURL(url)
 
 	http.Redirect(w, r, "/wiki/view/"+name, http.StatusFound)
 }
@@ -283,9 +290,9 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage)
 		fn(w, r, p, s)
 	}
 }
-func makeScrapeHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+func makeScrapeHandler(fn func(http.ResponseWriter, *http.Request, mdConverter), mdc mdConverter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fn(w, r)
+		fn(w, r, mdc)
 	}
 }
 
@@ -351,6 +358,8 @@ func main() {
 	cached := newCachedStorage(fileStorage{tagDir}, wikiDir, tagDir)
 	fstore := &cached
 
+	htmltomd := md.NewConverter("", true, nil)
+
 	httpmux.Handle("/wiki", loggingHandler(simpleHandler("home", getNav, fstore)))
 	httpmux.Handle("/wiki/search/", loggingHandler(makeSearchHandler(getNav, fstore)))
 	httpmux.Handle("/wiki/view/", loggingHandler(makeHandler(viewHandler, getNav, fstore)))
@@ -358,7 +367,7 @@ func main() {
 	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
 	httpmux.Handle("/wiki/delete/", loggingHandler(makeHandler(deleteHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/move/", loggingHandler(makeHandler(moveHandler, getNav, fstore)))
-	httpmux.Handle("/wiki/scrape/", loggingHandler(makeScrapeHandler(scrapeHandler)))
+	httpmux.Handle("/wiki/scrape/", loggingHandler(makeScrapeHandler(scrapeHandler, htmltomd)))
 	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))
