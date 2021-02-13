@@ -245,11 +245,25 @@ func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	}
 	http.Redirect(w, r, "/wiki/view/"+to, http.StatusFound)
 }
-func scrapeHandler(w http.ResponseWriter, r *http.Request, mdc mdConverter) {
+func scrapeHandler(w http.ResponseWriter, r *http.Request, mdc mdConverter, st storage) {
 	url := r.FormValue("url")
 	name := r.FormValue("target")
 
-	mdc.ConvertURL(url)
+	body, err := mdc.ConvertURL(url)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// TODO Pass in file store and then when convert is called save to a new file
+	// Need a means of determining where to save the file to...perhaps whatever is
+	// specified - that should work for folders, etc already :-)
+	p := wikiPage{basePage: basePage{Title: name}, Body: template.HTML(body), Tags: "Scraped"}
+
+	err = p.save(st)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/wiki/view/"+name, http.StatusFound)
 }
@@ -290,9 +304,9 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage)
 		fn(w, r, p, s)
 	}
 }
-func makeScrapeHandler(fn func(http.ResponseWriter, *http.Request, mdConverter), mdc mdConverter) http.HandlerFunc {
+func makeScrapeHandler(fn func(http.ResponseWriter, *http.Request, mdConverter, storage), mdc mdConverter, fs storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fn(w, r, mdc)
+		fn(w, r, mdc, fs)
 	}
 }
 
@@ -367,7 +381,7 @@ func main() {
 	httpmux.Handle("/wiki/save/", loggingHandler(processSave(saveHandler, fstore)))
 	httpmux.Handle("/wiki/delete/", loggingHandler(makeHandler(deleteHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/move/", loggingHandler(makeHandler(moveHandler, getNav, fstore)))
-	httpmux.Handle("/wiki/scrape/", loggingHandler(makeScrapeHandler(scrapeHandler, htmltomd)))
+	httpmux.Handle("/wiki/scrape/", loggingHandler(makeScrapeHandler(scrapeHandler, htmltomd, fstore)))
 	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))

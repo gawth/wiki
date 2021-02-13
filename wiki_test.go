@@ -129,7 +129,7 @@ func TestDeletehHandler(t *testing.T) {
 		t.Errorf("Expected delete to be called %v but was called %v", 2, called)
 	}
 }
-func TestMovehHandler(t *testing.T) {
+func TestMoveHandler(t *testing.T) {
 	called := 0
 	stubrec := func(f string) {
 		if f != "moveFile" {
@@ -184,7 +184,16 @@ func TestScrapeHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	stubConverter := mdc{}
-	handler := makeScrapeHandler(scrapeHandler, &stubConverter)
+	stubStore := stubStorage{
+		storeFileFunc: func(name string, content []byte) error {
+			// Check for test.md (the wiki entry) and test which is the tag file
+			if name != "test" && name != "test.md" {
+				t.Errorf("expecting %v but got %v", "test", name)
+			}
+			return nil
+		},
+	}
+	handler := makeScrapeHandler(scrapeHandler, &stubConverter, &stubStore)
 	handler(w, req)
 
 	resp := w.Result()
