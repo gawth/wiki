@@ -28,7 +28,7 @@ jobs:
             push: true
             tags: |
               registry.digitalocean.com/gawth/wiki:latest
-              registry.digitalocean.com/gawth/wiki:sha-$ github.sha 
+              registry.digitalocean.com/gawth/wiki:sha-${{ github.sha  }} 
 
   deploy-wiki:
       needs: build
