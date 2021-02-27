@@ -12,6 +12,8 @@ ENV KEYLOCATION secret
 ENV LOGFILE ""
 ENV PORT 8990
 
+ENV CGO_ENABLED 1
+
 RUN go get ./...
 RUN go build ./... 
 

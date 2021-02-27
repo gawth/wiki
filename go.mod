@@ -10,6 +10,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.0.1-0.20170201225849-2268707a8f08+incompatible
 	github.com/justinas/alice v0.0.0-20160910103822-1051eaf52fca
+	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/microcosm-cc/bluemonday v1.0.2
 	github.com/mkideal/cli v0.2.3 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible
