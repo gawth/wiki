@@ -38,9 +38,9 @@ jobs:
         - name: Deploy wiki to DigitalOcean Droplet
           uses: appleboy/ssh-action@v0.1.4
           with:
-            host: $ secrets.DO_WIKI_HOST 
+            host: ${{ secrets.DO_WIKI_HOST }} 
             username: root
-            key: $ secrets.DO_WIKI_KEY 
+            key: ${{ secrets.DO_WIKI_KEY }} 
             port: 22
             script: |
               doctl registry login --expiry-seconds 180
