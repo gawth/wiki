@@ -52,7 +52,7 @@ jobs:
               echo "starting server instance..."
               docker run -d \
                 --restart always \
-                -p 0.0.0.0:80:80 \
+                -p 0.0.0.0:80:8990 \
                 --name wiki \
                 registry.digitalocean.com/gawth/wiki:latest
 
