@@ -54,6 +54,5 @@ jobs:
               docker run -d \
                 --restart always \
                 --name wiki \
-                --network bridge \
                 registry.digitalocean.com/gawth/wiki:latest
 
