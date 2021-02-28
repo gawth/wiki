@@ -5,7 +5,7 @@ on:
         - main
 
   # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  #workflow_dispatch:
 
 jobs:
   build:
@@ -26,6 +26,7 @@ jobs:
           with:
             context: .
             push: true
+            file: DockerfileDO
             tags: |
               registry.digitalocean.com/gawth/wiki:latest
               registry.digitalocean.com/gawth/wiki:sha-${{ github.sha  }} 
@@ -52,7 +53,7 @@ jobs:
               echo "starting server instance..."
               docker run -d \
                 --restart always \
-                -p 0.0.0.0:80:8990 \
+                -p 0.0.0.0:8990:8990 \
                 --name wiki \
                 registry.digitalocean.com/gawth/wiki:latest
 
