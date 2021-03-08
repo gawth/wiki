@@ -57,5 +57,5 @@ jobs:
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml stop
 
               echo "start the containers"
-              docker-compose -f /root/docker-compose.yaml/docker-compose.yaml up
+              docker-compose -f /root/docker-compose.yaml/docker-compose.yaml up -d
 
