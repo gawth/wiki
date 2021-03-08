@@ -34,7 +34,7 @@ jobs:
             username: root
             key: ${{ secrets.DO_WIKI_KEY }} 
             port: 22
-            source: "docker-compose.yaml"
+            source: "/home/runner/work/wiki/wiki/docker-compose.yaml"
             target: "docker-compose.yaml"
 
 
