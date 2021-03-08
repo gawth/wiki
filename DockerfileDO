@@ -11,8 +11,8 @@ ENV KEYLOCATION secret
 
 ENV LOGFILE ""
 ENV PORT 8990
-ENV VIRTUAL_HOST=gawthorpe.co.uk
-ENV LETSENCRYPT_HOST=gawthorpe.co.uk
+ENV VIRTUAL_HOST=wiki.gawthorpe.co.uk
+ENV LETSENCRYPT_HOST=wiki.gawthorpe.co.uk
 
 ENV CGO_ENABLED 1
 
