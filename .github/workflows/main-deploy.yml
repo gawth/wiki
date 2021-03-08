@@ -54,8 +54,8 @@ jobs:
               doctl registry login --expiry-seconds 180
 
               echo "stop the containers"
-              docker-compose -f docker-compose/docker-compose.yaml stop
+              docker-compose -f /root/docker-compose/docker-compose.yaml stop
 
               echo "start the containers"
-              docker-compose -f docker-compose/docker-compose.yaml up
+              docker-compose -f /root/docker-compose/docker-compose.yaml up
 
