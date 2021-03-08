@@ -8,6 +8,6 @@ services:
         ports:
           - "8990:8990"
         volumes:
-          - "/usr/share/wiki"
+          - "/usr/share/wiki:/usr/share/wiki:rw"
 
 
