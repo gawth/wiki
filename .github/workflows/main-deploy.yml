@@ -34,7 +34,7 @@ jobs:
             username: root
             key: ${{ secrets.DO_WIKI_KEY }} 
             port: 22
-            source: "/home/runner/work/wiki/wiki/docker-compose.yaml"
+            source: "docker-compose.yaml"
             target: "docker-compose.yaml"
 
 
@@ -54,8 +54,8 @@ jobs:
               doctl registry login --expiry-seconds 180
 
               echo "stop the containers"
-              docker-compose stop
+              docker-compose -f docker-compose/docker-compose.yaml stop
 
               echo "start the containers"
-              docker-compose up
+              docker-compose -f docker-compose/docker-compose.yaml up
 
