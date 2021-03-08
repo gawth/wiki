@@ -52,9 +52,15 @@ jobs:
             port: 22
             script: |
               doctl registry login --expiry-seconds 180
+              # Use this to perform a backup of the wiki volume
+              docker pull loomchild/volume-backup
 
               echo "stop the containers"
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml stop
+
+              echo "backup the volume"
+              dayofweek=`date '+%u'`
+              docker run -v docker-composeyaml_wikifs:/volume --rm loomchild/volume-backup backup - > wiki-backup-$dayofweek.tar.bz2
 
               echo "start the containers"
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml up -d
