@@ -45,16 +45,10 @@ jobs:
             port: 22
             script: |
               doctl registry login --expiry-seconds 180
-              docker pull registry.digitalocean.com/gawth/wiki:latest
 
-              docker stop wiki || true
-              docker rm wiki || true
+              echo "stop the containers"
+              docker-compose stop
 
-              echo "starting server instance..."
-              docker run -d \
-                --restart always \
-                --name wiki \
-                -p 0.0.0.0:8990:8990 \
-                --network bridge \
-                registry.digitalocean.com/gawth/wiki:latest
+              echo "start the containers"
+              docker-compose up
 

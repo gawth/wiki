@@ -1,0 +1,13 @@
+version: '3.3'
+
+services:
+    wiki:
+        restart: always
+        image: registry.digitalocean.com/gawth/wiki:latest
+        network_mode: bridge
+        ports:
+          - "8990:8990"
+        volumes:
+          - "/usr/share/wiki"
+
+
