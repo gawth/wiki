@@ -62,6 +62,9 @@ jobs:
               dayofweek=`date '+%u'`
               docker run -v docker-composeyaml_wikifs:/volume --rm loomchild/volume-backup backup - > wiki-backup-$dayofweek.tar.bz2
 
+              echo "Pull the latest image"
+              docker pull registry.digitalocean.com/gawth/wiki
+
               echo "start the containers"
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml up -d
 
