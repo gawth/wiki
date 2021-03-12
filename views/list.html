@@ -1,0 +1,43 @@
+{{template "header" "Wiki"}}
+
+<script>
+    function renderTitle(data) {
+	return '<a href="/wiki/view/' + data +'">' + data + '</a>'
+    }
+    function renderElement(data) {
+	return '<div>' + data + '</div>'
+    }
+    function renderWiki(data) {
+	return '<div>' + 
+	    renderTitle(data.Title) + 
+	    renderElement(data.Body) + 
+	    renderElement(data.Modified) + 
+	    '</div>'
+    }
+    async function getWiki(name) {
+	let response = await fetch('/api?wiki=' + name)
+	let data = await response.json()
+	console.log(data)
+	document.getElementById("wiki").innerHTML = renderWiki(data)
+	return
+    }
+
+</script>
+
+<body>
+
+    {{template "leftnav" .}}
+    <div class="content">
+        <h1> List </h1>
+        <!-- -->
+	<form onsubmit="getWiki('test')">
+	    Wiki: <input type="text">
+	    <input type="submit">
+	</form>
+	<p id="wiki"></p>
+        {{template "footer"}}
+    </div>
+</body>
+
+
+</html>

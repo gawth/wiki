@@ -274,6 +274,7 @@ var templates = template.Must(template.ParseFiles(
 	"views/pub.html",
 	"views/pubhome.html",
 	"views/home.html",
+	"views/list.html",
 	"views/search.html",
 	"views/index.html",
 	"views/footer.html",
@@ -375,6 +376,7 @@ func main() {
 	htmltomd := md.NewConverter("", true, nil)
 
 	httpmux.Handle("/wiki", loggingHandler(simpleHandler("home", getNav, fstore)))
+	httpmux.Handle("/wiki/list/", loggingHandler(simpleHandler("list", getNav, fstore)))
 	httpmux.Handle("/wiki/search/", loggingHandler(makeSearchHandler(getNav, fstore)))
 	httpmux.Handle("/wiki/view/", loggingHandler(makeHandler(viewHandler, getNav, fstore)))
 	httpmux.Handle("/wiki/edit/", loggingHandler(makeHandler(editHandler, getNav, fstore)))
