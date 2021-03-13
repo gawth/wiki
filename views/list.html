@@ -1,6 +1,14 @@
 {{template "header" "Wiki"}}
 
 <script>
+    (function(history){
+	var pushState = history.pushState;
+	history.pushState = function(state, title, url) {
+	  console.log(state, title, url);
+	  return pushState.apply(history, arguments);
+	};
+    })(window.history);
+
     function renderTitle(data) {
 	return '<a href="/wiki/view/' + data +'">' + data + '</a>'
     }
@@ -14,12 +22,18 @@
 	    renderElement(data.Modified) + 
 	    '</div>'
     }
-    async function getWiki(name) {
+    async function getWiki(that) {
+	let name = that.wikiName.value
 	let response = await fetch('/api?wiki=' + name)
+	if (response.status != 200) {
+	    document.getElementById("wiki").innerHTML = 'Unknown Wiki'
+	    return false
+	}
+
 	let data = await response.json()
-	console.log(data)
 	document.getElementById("wiki").innerHTML = renderWiki(data)
-	return
+	window.history.pushState('listpage', data.Title, data.Title);
+	return false
     }
 
 </script>
@@ -30,9 +44,9 @@
     <div class="content">
         <h1> List </h1>
         <!-- -->
-	<form onsubmit="getWiki('test')">
-	    Wiki: <input type="text">
-	    <input type="submit">
+	<form onsubmit="getWiki(this); return false">
+	    Wiki: <input type="text" name="wikiName">
+	    <button>Submit</button>
 	</form>
 	<p id="wiki"></p>
         {{template "footer"}}
