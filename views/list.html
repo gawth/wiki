@@ -1,13 +1,27 @@
 {{template "header" "Wiki"}}
 
 <script>
+    let basePath = '/wiki/list/';
+
     (function(history){
 	var pushState = history.pushState;
 	history.pushState = function(state, title, url) {
-	  console.log(state, title, url);
-	  return pushState.apply(history, arguments);
+	    getAndRenderWiki(title)
+	    return pushState.apply(history, arguments);
 	};
     })(window.history);
+
+    async function getAndRenderWiki(name) {
+	let response = await fetch('/api?wiki=' + name)
+	if (response.status != 200) {
+	    document.getElementById("wiki").innerHTML = 'Unknown Wiki'
+	    return
+	}
+
+	let data = await response.json()
+	document.getElementById("wiki").innerHTML = renderWiki(data)
+	return
+    }
 
     function renderTitle(data) {
 	return '<a href="/wiki/view/' + data +'">' + data + '</a>'
@@ -22,29 +36,29 @@
 	    renderElement(data.Modified) + 
 	    '</div>'
     }
-    async function getWiki(that) {
+    function updateURL(that) {
 	let name = that.wikiName.value
-	let response = await fetch('/api?wiki=' + name)
-	if (response.status != 200) {
-	    document.getElementById("wiki").innerHTML = 'Unknown Wiki'
-	    return false
-	}
-
-	let data = await response.json()
-	document.getElementById("wiki").innerHTML = renderWiki(data)
-	window.history.pushState('listpage', data.Title, data.Title);
+	window.history.pushState('listpage', name, basePath + name);
 	return false
+    }
+    function onload() {
+	if (location.pathname.startsWith(basePath)) {
+	    let name = location.pathname.substring(basePath.length, location.pathname.length)
+	    if (name.length > 0) {
+		getAndRenderWiki(name)
+	    }
+	}
     }
 
 </script>
 
-<body>
+<body onload='onload()'>
 
     {{template "leftnav" .}}
     <div class="content">
         <h1> List </h1>
         <!-- -->
-	<form onsubmit="getWiki(this); return false">
+	<form onsubmit="return updateURL(this)">
 	    Wiki: <input type="text" name="wikiName">
 	    <button>Submit</button>
 	</form>
