@@ -27,7 +27,6 @@ func handleTag(w http.ResponseWriter, r *http.Request, s storage) bool {
 }
 func handleGetWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 	if r.Method != "GET" {
-		log.Println("Not a GET")
 		return false
 	}
 
@@ -46,15 +45,12 @@ func handleGetWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 	return true
 }
 func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
-	log.Println("Handling POST")
 	if r.Method != "POST" {
-		log.Println("Not a post")
 		return false
 	}
 
 	wiki := r.URL.Query().Get("wiki") // Get the wiki
 	if wiki == "" {
-		log.Println("No wiki param")
 		return false
 	}
 
@@ -78,9 +74,24 @@ func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return false
 	}
-	log.Printf("Saved %v\n", wp)
 
 	w.WriteHeader(http.StatusOK)
+	return true
+}
+func handleGetList(w http.ResponseWriter, r *http.Request, s storage) bool {
+	if r.Method != "GET" {
+		return false
+	}
+
+	list := r.URL.Query().Get("list") // Get the wiki list
+	if list == "" {
+		return false
+	}
+	data := s.getWikiList(list)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(data)
 	return true
 }
 
@@ -96,6 +107,9 @@ func innerAPIHandler(w http.ResponseWriter, r *http.Request, s storage) {
 	}
 
 	if ok := handlePostWiki(w, r, s); ok {
+		return
+	}
+	if ok := handleGetList(w, r, s); ok {
 		return
 	}
 

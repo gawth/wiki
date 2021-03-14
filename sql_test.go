@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 	"time"
 
@@ -52,10 +51,6 @@ func TestSqlStuff(t *testing.T) {
 	for rows.Next() {
 		err = rows.Scan(&uid, &username, &department, &created)
 		checkErr(err)
-		fmt.Println(uid)
-		fmt.Println(username)
-		fmt.Println(department)
-		fmt.Println(created)
 	}
 
 	rows.Close()

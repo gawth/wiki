@@ -26,6 +26,10 @@ func (ss *stubStorage) moveFile(from, to string) error {
 	ss.logit("moveFile")
 	return nil
 }
+func (ss *stubStorage) getWikiList(from string) []string {
+	ss.logit("getWikiList")
+	return []string{"test1", "test2"}
+}
 
 func (ss *stubStorage) getPublicPages() []string {
 	return []string{}

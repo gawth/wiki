@@ -26,6 +26,7 @@ type storage interface {
 	GetTagWikis(tag string) Tag
 	IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex
 	IndexWikiFiles(base, path string) []wikiNav
+	getWikiList(from string) []string
 }
 
 type fileStorage struct {
@@ -312,4 +313,8 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 	sort.Sort(sort.Reverse(byModTime(names)))
 	return names
 
+}
+
+func (fs *fileStorage) getWikiList(from string) []string {
+	return []string{}
 }

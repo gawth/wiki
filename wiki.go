@@ -93,17 +93,14 @@ func (p *wikiPage) save(s storage) error {
 		return err
 	}
 
-	log.Printf("Pub flag %v\n", p.Published)
 	pubfile := getWikiPubFilename(p.Title)
 	if p.Published {
-		log.Printf("Saving %v\n", pubfile)
 		err = s.storeFile(pubfile, nil)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		log.Printf("Removing %v\n", pubfile)
 		// Only return an error if something other than file doesnt exit
 		// We expect this fail to not exist most of the time but we dont know if
 		// we don't try
@@ -185,7 +182,6 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 
 	body = regexp.MustCompile("\r\n").ReplaceAllString(body, "\n")
 
-	log.Printf("Checkbox is : %v", r.FormValue("wikipub"))
 	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body), Tags: r.FormValue("wikitags")}
 	if r.FormValue("wikipub") == "on" {
 		p.Published = true
@@ -207,14 +203,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 func deleteHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 
 	filename := getWikiFilename(wikiDir, p.Title)
-	log.Printf("Gonna delete : %v", filename)
 
 	if err := s.deleteFile(filename); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	tagsfile := getWikiTagsFilename(p.Title)
-	log.Printf("and tags to delete : %v", tagsfile)
 	if err := s.deleteFile(tagsfile); err != nil && !os.IsNotExist(err) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -230,15 +224,12 @@ func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	}
 	tofile := getWikiFilename(wikiDir, to)
 
-	log.Printf("Gonna move : %v to %v", from, tofile)
-
 	if err := s.moveFile(from, tofile); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	tagsfile := getWikiTagsFilename(p.Title)
 	totags := getWikiTagsFilename(to)
-	log.Printf("and tags to move : %v to %v", tagsfile, totags)
 	if err := s.moveFile(tagsfile, totags); err != nil && !os.IsNotExist(err) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -293,7 +284,6 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage)
 	return func(w http.ResponseWriter, r *http.Request) {
 		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
 		if len(wword) == 0 {
-			log.Printf("Path is : %v", r.URL.Path)
 			m := validPath.FindStringSubmatch(r.URL.Path)
 			if m == nil {
 				http.NotFound(w, r)

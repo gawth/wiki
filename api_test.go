@@ -115,3 +115,31 @@ func TestWikiApiPostHandler(t *testing.T) {
 		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
 	}
 }
+func TestWApiListHandler(t *testing.T) {
+
+	req := httptest.NewRequest("GET", "http://localhost/api?list=fred", nil)
+	w := httptest.NewRecorder()
+	s := stubStorage{}
+
+	innerAPIHandler(w, req, &s)
+
+	resp := w.Result()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("Failed to read response,  error: %v", err.Error())
+	}
+	if resp.StatusCode != 200 {
+		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+	if len(data) == 0 {
+		t.Errorf("Got zero data back: %v", len(data))
+	}
+	var results []string
+	err = json.Unmarshal(data, &results)
+	if err != nil {
+		t.Errorf("Error back from json unmarshal: %v", err)
+	}
+	if len(results) != 2 {
+		t.Errorf("Expecting 2 results but got : %v", len(results))
+	}
+}
