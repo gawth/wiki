@@ -89,9 +89,14 @@ func handleGetList(w http.ResponseWriter, r *http.Request, s storage) bool {
 	}
 	data := s.getWikiList(list)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(data)
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(data)
+	}
+
 	return true
 }
 

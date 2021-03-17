@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -43,7 +44,7 @@ func createDir(filename string) error {
 	}
 	return nil
 }
-func (fs *fileStorage) storeFile(name string, content []byte) error {
+func (fst *fileStorage) storeFile(name string, content []byte) error {
 	err := createDir(name)
 	if err != nil {
 		return err
@@ -57,14 +58,14 @@ func (fs *fileStorage) storeFile(name string, content []byte) error {
 	return nil
 }
 
-func (fs *fileStorage) deleteFile(name string) error {
+func (fst *fileStorage) deleteFile(name string) error {
 	if err := os.Remove(name); err != nil {
 		return err
 	}
 
 	return nil
 }
-func (fs *fileStorage) moveFile(from, to string) error {
+func (fst *fileStorage) moveFile(from, to string) error {
 	if err := os.Rename(from, to); err != nil {
 		return err
 	}
@@ -86,11 +87,11 @@ func indexPubPages(path string) []string {
 	return results
 }
 
-func (fs *fileStorage) getPublicPages() []string {
+func (fst *fileStorage) getPublicPages() []string {
 	return indexPubPages(pubDir)
 }
 
-func (fs *fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
+func (fst *fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	filename := getWikiFilename(wikiDir, p.Title)
 
 	file, err := os.Open(filename)
@@ -142,7 +143,7 @@ func (fs *fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	return p, nil
 }
 
-func (fs *fileStorage) searchPages(root string, query string) []string {
+func (fst *fileStorage) searchPages(root string, query string) []string {
 	var wg sync.WaitGroup
 	results := make(chan string)
 
@@ -169,11 +170,10 @@ func readFile(wg *sync.WaitGroup, name string, path string, query string, result
 	defer wg.Done()
 
 	file, err := os.Open(path)
-	defer file.Close()
-
 	if err != nil {
 		return
 	}
+	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for i := 1; scanner.Scan(); i++ {
 		if strings.Contains(scanner.Text(), query) {
@@ -183,7 +183,7 @@ func readFile(wg *sync.WaitGroup, name string, path string, query string, result
 	}
 }
 
-func (fs *fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
+func (fst *fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 	filename := getPDFFilename(wikiDir, p.Title)
 
 	file, err := os.Open(filename)
@@ -199,7 +199,7 @@ func (fs *fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 
 // IndexTags reads tags files from the file system and constructs
 // an index
-func (fs *fileStorage) IndexTags(path string) TagIndex {
+func (fst *fileStorage) IndexTags(path string) TagIndex {
 	index := TagIndex(make(map[string]Tag))
 
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
@@ -218,13 +218,13 @@ func (fs *fileStorage) IndexTags(path string) TagIndex {
 
 	return index
 }
-func (fs *fileStorage) GetTagWikis(tag string) Tag {
-	ti := fs.IndexTags(fs.TagDir)
+func (fst *fileStorage) GetTagWikis(tag string) Tag {
+	ti := fst.IndexTags(fst.TagDir)
 	return ti[tag]
 }
 
 // IndexRawFiles adds in tags for a file extension tag
-func (fs *fileStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
+func (fst *fileStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
 
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
 		if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(fileExtension)) {
@@ -248,7 +248,7 @@ func genID(base, name string) string {
 // Any hidden (dot) files are skipped
 // Folders are included as part of the path
 // Mod time is used to order the files
-func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
+func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 	files, err := ioutil.ReadDir(path)
 	checkErr(err)
 
@@ -301,7 +301,7 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 				IsDir: true,
 				ID:    genID(base, info.Name()),
 			}
-			tmp.SubNav = fs.IndexWikiFiles(newbase, path+"/"+info.Name())
+			tmp.SubNav = fst.IndexWikiFiles(newbase, path+"/"+info.Name())
 			if len(tmp.SubNav) > 0 {
 				// Override the dir's mod time with the first entry
 				tmp.Mod = tmp.SubNav[0].Mod
@@ -315,6 +315,22 @@ func (fs *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 
 }
 
-func (fs *fileStorage) getWikiList(from string) []string {
-	return []string{}
+func (fst *fileStorage) getWikiList(from string) []string {
+	path := wikiDir + from
+
+	var results []string
+
+	err := filepath.WalkDir(path, func(subpath string, info fs.DirEntry, err error) error {
+		if err != nil {
+			log.Print("getWikiList", err)
+			return nil
+		}
+		if !info.IsDir() {
+			results = append(results, strings.TrimPrefix(subpath, path))
+		}
+		return nil
+	})
+	checkErr(err)
+
+	return results
 }

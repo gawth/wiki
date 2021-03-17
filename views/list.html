@@ -4,50 +4,58 @@
     let basePath = '/wiki/list/';
 
     (function(history){
-	var pushState = history.pushState;
-	history.pushState = function(state, title, url) {
-	    getAndRenderWiki(title)
-	    return pushState.apply(history, arguments);
-	};
+		var pushState = history.pushState;
+		history.pushState = function(state, title, url) {
+			getAndRenderWiki(title)
+			return pushState.apply(history, arguments);
+		};
     })(window.history);
 
-    async function getAndRenderWiki(name) {
-	let response = await fetch('/api?wiki=' + name)
-	if (response.status != 200) {
-	    document.getElementById("wiki").innerHTML = 'Unknown Wiki'
-	    return
+	async function getWikiList(name) {
+		let response = await fetch('/api?list=' + name).catch(() => {return []})
+		if (!response.ok) {
+			return []
+		}
+		if (response.status != 200) {
+			return []
+		}
+		return response.json()
 	}
-
-	let data = await response.json()
-	document.getElementById("wiki").innerHTML = renderWiki(data)
-	return
+    async function getAndRenderWiki(name) {
+		let data = await getWikiList(name)
+		if (data.length === 0) {
+			document.getElementById("wiki").innerHTML = "Unknown Wiki"
+			return
+		}
+		document.getElementById("wiki").innerHTML = renderElement(data)
+		return
     }
 
     function renderTitle(data) {
-	return '<a href="/wiki/view/' + data +'">' + data + '</a>'
+		return '<a href="/wiki/view/' + data +'">' + data + '</a>'
     }
     function renderElement(data) {
-	return '<div>' + data + '</div>'
+		return '<div>' + data + '</div>'
     }
     function renderWiki(data) {
-	return '<div>' + 
-	    renderTitle(data.Title) + 
-	    renderElement(data.Body) + 
-	    renderElement(data.Modified) + 
-	    '</div>'
+		return '<div>' + 
+			renderTitle(data.Title) + 
+			renderElement(data.Body) + 
+			renderElement(data.Modified) + 
+			'</div>'
     }
     function updateURL(that) {
-	let name = that.wikiName.value
-	window.history.pushState('listpage', name, basePath + name);
-	return false
+        let name = that.wikiName.value
+        window.history.pushState('listpage', name, basePath + name);
+        return false
     }
     function onload() {
-	if (location.pathname.startsWith(basePath)) {
-	    let name = location.pathname.substring(basePath.length, location.pathname.length)
-	    if (name.length > 0) {
-		getAndRenderWiki(name)
-	    }
-	}
+        if (location.pathname.startsWith(basePath)) {
+            let name = location.pathname.substring(basePath.length, location.pathname.length)
+            if (name.length > 0) {
+				getAndRenderWiki(name)
+            }
+        }
     }
 
 </script>
@@ -58,11 +66,11 @@
     <div class="content">
         <h1> List </h1>
         <!-- -->
-	<form onsubmit="return updateURL(this)">
-	    Wiki: <input type="text" name="wikiName">
-	    <button>Submit</button>
-	</form>
-	<p id="wiki"></p>
+    <form onsubmit="return updateURL(this)">
+        Wiki: <input type="text" name="wikiName">
+        <button>Submit</button>
+    </form>
+    <p id="wiki"></p>
         {{template "footer"}}
     </div>
 </body>
