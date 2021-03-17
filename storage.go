@@ -76,7 +76,7 @@ func indexPubPages(path string) []string {
 
 	var results []string
 
-	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
+	err := filepath.WalkDir(path, func(subpath string, info fs.DirEntry, _ error) error {
 		if !info.IsDir() {
 			results = append(results, strings.TrimPrefix(subpath, path))
 		}
@@ -147,7 +147,7 @@ func (fst *fileStorage) searchPages(root string, query string) []string {
 	var wg sync.WaitGroup
 	results := make(chan string)
 
-	filepath.Walk(root, func(path string, file os.FileInfo, err error) error {
+	filepath.WalkDir(root, func(path string, file fs.DirEntry, err error) error {
 		if !file.IsDir() {
 			wg.Add(1)
 			name := strings.TrimSuffix(strings.TrimPrefix(path, root), ".md")
@@ -202,7 +202,7 @@ func (fst *fileStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
 func (fst *fileStorage) IndexTags(path string) TagIndex {
 	index := TagIndex(make(map[string]Tag))
 
-	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
+	err := filepath.WalkDir(path, func(subpath string, info fs.DirEntry, _ error) error {
 		if !info.IsDir() && !strings.HasPrefix(info.Name(), ".") {
 			contents, err := ioutil.ReadFile(subpath)
 			checkErr(err)
@@ -226,7 +226,7 @@ func (fst *fileStorage) GetTagWikis(tag string) Tag {
 // IndexRawFiles adds in tags for a file extension tag
 func (fst *fileStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
 
-	err := filepath.Walk(path, func(subpath string, info os.FileInfo, _ error) error {
+	err := filepath.WalkDir(path, func(subpath string, info fs.DirEntry, _ error) error {
 		if strings.HasSuffix(strings.ToLower(info.Name()), strings.ToLower(fileExtension)) {
 			filename := strings.TrimPrefix(subpath, path)
 			existing.AssociateTagToWiki(filename, fileExtension)
