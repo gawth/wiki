@@ -11,12 +11,16 @@
 		};
     })(window.history);
 
-	async function getWikiList(name) {
-		let response = await fetch('/api?list=' + name).catch(() => {return []})
+	async function getWiki(name) {
+		let response = await fetch('/api?wiki=' + name).catch(() => {return []})
 		if (!response.ok) {
 			return []
 		}
-		if (response.status != 200) {
+		return response.json()
+	}
+	async function getWikiList(name) {
+		let response = await fetch('/api?list=' + name).catch(() => {return []})
+		if (!response.ok) {
 			return []
 		}
 		return response.json()
@@ -27,7 +31,12 @@
 			document.getElementById("wiki").innerHTML = "Unknown Wiki"
 			return
 		}
-		document.getElementById("wiki").innerHTML = renderElement(data)
+		data.map((async name  => {
+			let wiki = await getWiki(name)
+			// Note that this approach to updating the page will destroy any 
+			// event handlers on the element...
+			document.getElementById("wiki").innerHTML += renderWiki(wiki)
+		}))
 		return
     }
 
@@ -46,6 +55,7 @@
     }
     function updateURL(that) {
         let name = that.wikiName.value
+		document.getElementById("wiki").innerHTML = ''
         window.history.pushState('listpage', name, basePath + name);
         return false
     }

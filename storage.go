@@ -326,7 +326,9 @@ func (fst *fileStorage) getWikiList(from string) []string {
 			return nil
 		}
 		if !info.IsDir() {
-			results = append(results, strings.TrimPrefix(subpath, path))
+			tmp := strings.TrimPrefix(subpath, wikiDir)
+			tmp = strings.TrimSuffix(tmp, ".md")
+			results = append(results, tmp)
 		}
 		return nil
 	})
