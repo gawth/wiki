@@ -1,6 +1,9 @@
 
 {{define "submenu"}}
 	{{if .IsDir}}
+	<div class="wiki-list">
+		<a href="/wiki/list/{{.Name}}" ><button> </button></a>
+	</div>
 	<li class="has-children">
 		<input type="checkbox" name="sub-group-{{.ID}}" id="sub-group-{{.ID}}">
 		<label for="sub-group-{{.ID}}">{{.Name}}</label>
