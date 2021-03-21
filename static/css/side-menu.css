@@ -325,7 +325,9 @@ Main Components
 .cd-accordion-menu {
     width: 100%;
     margin-left: -40px;
+	/* Turn this off - menu ends up with a scroll bar...meh but not too bad
     overflow-wrap: break-word;
+	*/
 }
 
 .cd-accordion-menu ul {
@@ -557,10 +559,5 @@ Main Components
 
 .wiki-list {
 	float: right;
-}
-.wiki-list button {
-	border-radius: 50%;
-	height: 15px;
-	width: 15px;
 }
 
