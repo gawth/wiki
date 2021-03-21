@@ -353,7 +353,7 @@ Main Components
 .cd-accordion-menu a {
     border: none;
     position: relative;
-    /* display: block; */
+    display: block;
     padding: 0.6em 0 0.6em 0.6em;
     /* background: #4d5158; */
     box-shadow: inset 1 -1px #555960;
