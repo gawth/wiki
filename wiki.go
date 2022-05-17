@@ -269,6 +269,7 @@ var templates = template.Must(template.ParseFiles(
 	"views/search.html",
 	"views/index.html",
 	"views/footer.html",
+	"views/recents.html",
 	"views/leftnav.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {

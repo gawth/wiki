@@ -15,6 +15,8 @@ import (
 	"sync"
 )
 
+const TIME_FORMAT = "2006-01-02 15:04:05"
+
 type storage interface {
 	storeFile(name string, content []byte) error
 	deleteFile(name string) error
@@ -268,6 +270,7 @@ func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 				Name:    name,
 				URL:     base + "/" + name,
 				Mod:     info.ModTime(),
+				ModStr:  info.ModTime().Format(TIME_FORMAT),
 				ID:      genID(base, name),
 				Summary: "This is a test summary for markdown",
 			}
@@ -279,6 +282,7 @@ func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 				Name:    name,
 				URL:     base + "/" + name,
 				Mod:     info.ModTime(),
+				ModStr:  info.ModTime().Format(TIME_FORMAT),
 				ID:      genID(base, name),
 				Summary: "This is a test summary for text file",
 			}
@@ -286,10 +290,11 @@ func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 		}
 		if strings.HasSuffix(info.Name(), ".pdf") {
 			tmp := wikiNav{
-				Name: info.Name(),
-				URL:  base + "/" + info.Name(),
-				Mod:  info.ModTime(),
-				ID:   genID(base, info.Name()),
+				Name:   info.Name(),
+				URL:    base + "/" + info.Name(),
+				Mod:    info.ModTime(),
+				ModStr: info.ModTime().Format(TIME_FORMAT),
+				ID:     genID(base, info.Name()),
 			}
 			names = append(names, tmp)
 		}

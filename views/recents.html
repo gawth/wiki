@@ -1,0 +1,17 @@
+{{define "recent_items"}}
+	{{range .}}
+		{{if .IsDir}}
+			{{template "recent_items" .SubNav}}
+		{{else}}
+		<li class=""><a href="/wiki/view{{.URL}}" class="">{{.ModStr}} - {{.Name}}</a></li>
+		{{end}}
+	{{end}}
+{{end}}
+{{define "recents"}}
+<div id="recents">
+	<ul class="">
+		{{template "recent_items" .Wikis}}
+	</ul>
+</div>
+
+{{end}}

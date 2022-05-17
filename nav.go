@@ -12,6 +12,7 @@ type wikiNav struct {
 	IsDir   bool
 	SubNav  []wikiNav
 	Mod     time.Time
+	ModStr  string
 	Summary string
 }
 type nav struct {
