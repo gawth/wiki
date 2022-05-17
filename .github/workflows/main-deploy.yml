@@ -53,14 +53,15 @@ jobs:
             script: |
               doctl registry login --expiry-seconds 180
               # Use this to perform a backup of the wiki volume
-              docker pull loomchild/volume-backup
+              # Stopped using this as the files are backed up by the droplet backup anyway
+              # docker pull loomchild/volume-backup
 
               echo "stop the containers"
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml stop
 
-              echo "backup the volume"
-              dayofweek=`date '+%u'`
-              docker run -v docker-composeyaml_wikifs:/volume --rm loomchild/volume-backup backup - > wiki-backup-$dayofweek.tar.bz2
+              #echo "backup the volume"
+              #dayofweek=`date '+%u'`
+              #docker run -v docker-composeyaml_wikifs:/volume --rm loomchild/volume-backup backup - > wiki-backup-$dayofweek.tar.bz2
 
               echo "Pull the latest image"
               docker pull registry.digitalocean.com/gawth/wiki
