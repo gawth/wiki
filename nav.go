@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sort"
 	"time"
 )
 
@@ -16,9 +17,10 @@ type wikiNav struct {
 	Summary string
 }
 type nav struct {
-	Pages []string
-	Wikis []wikiNav
-	Tags  TagIndex
+	Pages   []string
+	Wikis   []wikiNav
+	Tags    TagIndex
+	Recents []wikiNav
 }
 
 type navFunc func(storage) nav
@@ -38,6 +40,27 @@ func contains(target string, in []string) bool {
 	return false
 }
 
+func flattenWikis(current []wikiNav) []wikiNav {
+	var newList []wikiNav
+
+	for _, v := range current {
+		if v.IsDir {
+			newList = append(newList, flattenWikis(v.SubNav)...)
+		} else {
+			newList = append(newList, v)
+		}
+	}
+	return newList
+}
+func genRecents(current []wikiNav) []wikiNav {
+	var newList []wikiNav
+
+	newList = flattenWikis(current)
+	sort.Sort(sort.Reverse(byModTime(newList)))
+
+	return newList
+
+}
 func getNav(s storage) nav {
 	start := time.Now()
 	wikis := s.IndexWikiFiles("", wikiDir)
@@ -51,7 +74,8 @@ func getNav(s storage) nav {
 	log.Printf("[nav] tags %v", loadtags.Sub(loadwikis))
 	log.Printf("[nav] idxtags %v", indexTags.Sub(loadtags))
 	return nav{
-		Wikis: wikis,
-		Tags:  indexedTags,
+		Wikis:   wikis,
+		Tags:    indexedTags,
+		Recents: genRecents(wikis),
 	}
 }
