@@ -6,6 +6,9 @@ WORKDIR /wiki
 
 ENV WIKIDIR /usr/share/wiki
 
+RUN groupadd -r wiki -g 1024 && useradd -r -u 1024 -g wiki wiki
+USER wiki
+
 RUN mkdir secret
 ENV KEYLOCATION secret
 
