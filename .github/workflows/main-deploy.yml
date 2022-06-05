@@ -58,6 +58,7 @@ jobs:
 
               echo "stop the containers"
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml stop
+              docker-compose -f /home/gawth/wiki/nginx-compose.v2.yaml stop letsencrypt-nginx-proxy-companion
 
               #echo "backup the volume"
               #dayofweek=`date '+%u'`
@@ -68,4 +69,5 @@ jobs:
 
               echo "start the containers"
               docker-compose -f /root/docker-compose.yaml/docker-compose.yaml up -d
+              docker-compose -f /home/gawth/wiki/nginx-compose.v2.yaml up -d
 
