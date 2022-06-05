@@ -1,16 +1,23 @@
 FROM golang
 
+RUN groupadd -r wikigrp -g 1024 && useradd -r -u 1024 -g wikigrp wikiusr
+
+RUN mkdir /home/wikiusr
+RUN chown wikiusr /home/wikiusr && chgrp wikigrp /home/wikiusr
+
 ADD . /wiki
+RUN chown wikiusr /wiki && chgrp wikigrp /wiki
+RUN chmod 775 /wiki
 
 WORKDIR /wiki
 
 ENV WIKIDIR /usr/share/wiki
 
-RUN groupadd -r wiki -g 1024 && useradd -r -u 1024 -g wiki wiki
-USER wiki
+USER wikiusr
 
 RUN mkdir secret
 ENV KEYLOCATION secret
+
 
 ENV LOGFILE ""
 ENV PORT 8990
