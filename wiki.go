@@ -2,36 +2,33 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
-
-	"log"
-
-	"strings"
-
-	"time"
-
 	"strconv"
+	"strings"
+	"time"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 )
 
-var wikiDir string
-var tagDir string
-var pubDir string
-var ekey []byte
-
-var encryptionFlag = []byte("ENCRYPTED")
-
-var specialDir []string
+var (
+	wikiDir        string
+	tagDir         string
+	pubDir         string
+	ekey           []byte
+	encryptionFlag = []byte("ENCRYPTED")
+	specialDir     []string
+)
 
 type basePage struct {
 	Title string
 	Nav   nav
 }
+
 type wikiPage struct {
 	Body      template.HTML
 	Tags      string
@@ -43,6 +40,7 @@ type wikiPage struct {
 	basePage
 	Index []string
 }
+
 type searchPage struct {
 	basePage
 	Results []QueryResults
@@ -54,9 +52,10 @@ type mdConverter interface {
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
+
 func getPDFFilename(folder, name string) string {
 	return folder + name
 }
@@ -68,43 +67,38 @@ func getWikiFilename(folder, name string) string {
 func getWikiTagsFilename(name string) string {
 	return tagDir + name
 }
+
 func getWikiPubFilename(name string) string {
 	return pubDir + name
 }
+
 func (p *wikiPage) save(s storage) error {
-	var err error
 	filename := getWikiFilename(wikiDir, p.Title)
 	body := []byte(p.Body)
 	if p.Encrypted {
+		var err error
 		body, err = encrypt(body, ekey)
 		if err != nil {
 			return err
 		}
 		body = append(encryptionFlag, body...)
 	}
-	err = s.storeFile(filename, body)
-	if err != nil {
+	if err := s.storeFile(filename, body); err != nil {
 		return err
 	}
 
 	tagsfile := getWikiTagsFilename(p.Title)
-	err = s.storeFile(tagsfile, []byte(p.Tags))
-	if err != nil {
+	if err := s.storeFile(tagsfile, []byte(p.Tags)); err != nil {
 		return err
 	}
 
 	pubfile := getWikiPubFilename(p.Title)
 	if p.Published {
-		err = s.storeFile(pubfile, nil)
-		if err != nil {
+		if err := s.storeFile(pubfile, nil); err != nil {
 			return err
 		}
-
 	} else {
-		// Only return an error if something other than file doesnt exit
-		// We expect this fail to not exist most of the time but we dont know if
-		// we don't try
-		if err = s.deleteFile(pubfile); !os.IsNotExist(err) {
+		if err := s.deleteFile(pubfile); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
@@ -133,8 +127,8 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 
 	page.Body = template.HTML(p.SanitizeBytes(unsafe))
 	return page, nil
-
 }
+
 func viewHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 	p, err := convertMarkdown(s.getPage(p))
 	if err != nil {
@@ -157,8 +151,8 @@ func editHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 
 func makeSearchHandler(fn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		term := r.URL.Query().Get("term") // Get the search term
-		if len(term) == 0 {
+		term := r.URL.Query().Get("term")
+		if term == "" {
 			http.NotFound(w, r)
 			return
 		}
@@ -174,12 +168,10 @@ func simpleHandler(page string, fn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		renderTemplate(w, page, fn(s))
 	}
-
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage) string {
 	body := r.FormValue("body")
-
 	body = regexp.MustCompile("\r\n").ReplaceAllString(body, "\n")
 
 	p := wikiPage{basePage: basePage{Title: wiki}, Body: template.HTML(body), Tags: r.FormValue("wikitags")}
@@ -190,8 +182,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 		p.Encrypted = true
 	}
 
-	err := p.save(s)
-	if err != nil {
+	if err := p.save(s); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return ""
 	}
@@ -201,7 +192,6 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
-
 	filename := getWikiFilename(wikiDir, p.Title)
 
 	if err := s.deleteFile(filename); err != nil {
@@ -215,12 +205,13 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storag
 	}
 	http.Redirect(w, r, "/wiki", http.StatusFound)
 }
-func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 
+func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage) {
 	from := getWikiFilename(wikiDir, p.Title)
 	to := r.FormValue("to")
-	if len(to) == 0 {
+	if to == "" {
 		http.Error(w, "Form param 'to' needs setting", http.StatusBadRequest)
+		return
 	}
 	tofile := getWikiFilename(wikiDir, to)
 
@@ -236,6 +227,7 @@ func moveHandler(w http.ResponseWriter, r *http.Request, p *wikiPage, s storage)
 	}
 	http.Redirect(w, r, "/wiki/view/"+to, http.StatusFound)
 }
+
 func scrapeHandler(w http.ResponseWriter, r *http.Request, mdc mdConverter, st storage) {
 	url := r.FormValue("url")
 	name := r.FormValue("target")
@@ -250,8 +242,7 @@ func scrapeHandler(w http.ResponseWriter, r *http.Request, mdc mdConverter, st s
 	// specified - that should work for folders, etc already :-)
 	p := wikiPage{basePage: basePage{Title: name}, Body: template.HTML(body), Tags: "Scraped"}
 
-	err = p.save(st)
-	if err != nil {
+	if err := p.save(st); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -273,8 +264,7 @@ var templates = template.Must(template.ParseFiles(
 	"views/leftnav.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
-	if err != nil {
+	if err := templates.ExecuteTemplate(w, tmpl+".html", p); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -283,8 +273,8 @@ var validPath = regexp.MustCompile(`^/wiki/(edit|save|view|search|delete|move|sc
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage), navfn navFunc, s storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wword := r.URL.Query().Get("wword") // Get the wiki word param if available
-		if len(wword) == 0 {
+		wword := r.URL.Query().Get("wword")
+		if wword == "" {
 			m := validPath.FindStringSubmatch(r.URL.Path)
 			if m == nil {
 				http.NotFound(w, r)
@@ -296,6 +286,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *wikiPage, storage)
 		fn(w, r, p, s)
 	}
 }
+
 func makeScrapeHandler(fn func(http.ResponseWriter, *http.Request, mdConverter, storage), mdc mdConverter, fs storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fn(w, r, mdc, fs)
@@ -310,60 +301,45 @@ func processSave(fn func(http.ResponseWriter, *http.Request, string, storage) st
 			return
 		}
 		fn(w, r, m[2], s)
-
 	}
 }
 
 func parseWikiWords(target []byte) []byte {
 	var wikiWord = regexp.MustCompile(`\{\{([^\}^#]+)[#]*(.*)\}\}`)
-
 	return wikiWord.ReplaceAll(target, []byte("<a href=\"/wiki/view/$1#$2\">$1</a>"))
 }
 
 func loggingHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		t1 := time.Now()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
 		next.ServeHTTP(w, r)
-		t2 := time.Now()
-		log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
-	}
-	return http.HandlerFunc(fn)
+		log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), time.Since(start))
+	})
 }
 
 func main() {
 	specialDir = []string{"tags", "pub"}
 	config, err := LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkErr(err)
 
 	if config.Logfile != "" {
 		f, err := os.OpenFile(config.Logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			checkErr(err)
-		}
+		checkErr(err)
 		defer f.Close()
-
 		log.SetOutput(f)
 	}
 
-	wikiDir = config.WikiDir
-	if !strings.HasSuffix(wikiDir, "/") {
-		wikiDir = wikiDir + "/"
-	}
-	tagDir = wikiDir + "tags/" // Make sure this doesnt double up the / in the path...
-	pubDir = wikiDir + "pub/"  // Make sure this doesnt double up the / in the path...
-
+	wikiDir = strings.TrimSuffix(config.WikiDir, "/") + "/"
+	tagDir = wikiDir + "tags/"
+	pubDir = wikiDir + "pub/"
 	ekey = []byte(config.EncryptionKey)
 
-	os.Mkdir(config.WikiDir, 0755)
-	os.Mkdir(config.WikiDir+"tags", 0755)
+	os.MkdirAll(tagDir, 0755)
+	os.MkdirAll(pubDir, 0755)
 
 	httpmux := http.NewServeMux()
-
 	cached := newCachedStorage(fileStorage{tagDir}, wikiDir, tagDir)
 	fstore := &cached
-
 	htmltomd := md.NewConverter("", true, nil)
 
 	httpmux.Handle("/wiki", loggingHandler(simpleHandler("home", getNav, fstore)))
@@ -379,11 +355,8 @@ func main() {
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))
 	httpmux.Handle("/api", loggingHandler(apiHandler(innerAPIHandler, fstore)))
-
-	// Listen for normal traffic against root
 	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
 	httpmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	err = http.ListenAndServe(":"+strconv.Itoa(config.HTTPPort), httpmux)
-	checkErr(err)
 
+	checkErr(http.ListenAndServe(":"+strconv.Itoa(config.HTTPPort), httpmux))
 }

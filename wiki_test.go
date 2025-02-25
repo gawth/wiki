@@ -3,7 +3,8 @@ package main
 import (
 	"errors"
 	"html/template"
-	"io/ioutil"
+	"io"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -33,7 +34,6 @@ func TestParseQueryResults(t *testing.T) {
 		if res[0].Text != td.res.Text {
 			t.Errorf("ParseQueryResult: Failed to extract text %v: %v", res[0].Text, td.res.Text)
 		}
-
 	}
 }
 
@@ -55,8 +55,8 @@ func TestViewHandler(t *testing.T) {
 	viewHandler(w, req, &p, &s)
 
 	resp := w.Result()
-	body, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != 200 {
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
 	}
 	if !strings.Contains(string(body), testStr) {
@@ -80,7 +80,7 @@ func TestViewRedirect(t *testing.T) {
 	viewHandler(w, req, &p, &s)
 
 	resp := w.Result()
-	if resp.StatusCode != 302 {
+	if resp.StatusCode != http.StatusFound {
 		t.Errorf("No redirect, expected 302 but got %v", resp.StatusCode)
 	}
 }
@@ -99,11 +99,12 @@ func TestSearchHandler(t *testing.T) {
 
 	resp := w.Result()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
 	}
 }
-func TestDeletehHandler(t *testing.T) {
+
+func TestDeleteHandler(t *testing.T) {
 	called := 0
 	stubrec := func(f string) {
 		if f != "deleteFile" {
@@ -120,15 +121,14 @@ func TestDeletehHandler(t *testing.T) {
 
 	resp := w.Result()
 
-	// When we get a delete we redirect to home page...
-	if resp.StatusCode != 302 {
+	if resp.StatusCode != http.StatusFound {
 		t.Errorf("Failed to get a 302 response, got %v", resp.StatusCode)
 	}
-	// Expecting two calls to delete file - the wiki file and the tags file
 	if called != 2 {
 		t.Errorf("Expected delete to be called %v but was called %v", 2, called)
 	}
 }
+
 func TestMoveHandler(t *testing.T) {
 	called := 0
 	stubrec := func(f string) {
@@ -150,8 +150,7 @@ func TestMoveHandler(t *testing.T) {
 
 	resp := w.Result()
 
-	// Should redirect to the new URL
-	if resp.StatusCode != 302 {
+	if resp.StatusCode != http.StatusFound {
 		t.Errorf("Failed to get a 302 response, got %v", resp.StatusCode)
 	}
 	url, err := resp.Location()
@@ -161,7 +160,6 @@ func TestMoveHandler(t *testing.T) {
 	if url.Path != "/wiki/view/newtest" {
 		t.Errorf("Expected /wiki/view/newtest but got %v from 302", url.Path)
 	}
-	// Expecting two calls to - the wiki file and the tags file
 	if called != 2 {
 		t.Errorf("Expected storage  to be called %v but was called %v", 2, called)
 	}
@@ -186,7 +184,6 @@ func TestScrapeHandler(t *testing.T) {
 	stubConverter := mdc{}
 	stubStore := stubStorage{
 		storeFileFunc: func(name string, content []byte) error {
-			// Check for test.md (the wiki entry) and test which is the tag file
 			if name != "test" && name != "test.md" {
 				t.Errorf("expecting %v but got %v", "test", name)
 			}
@@ -198,7 +195,7 @@ func TestScrapeHandler(t *testing.T) {
 
 	resp := w.Result()
 
-	expectedStatus := 302
+	expectedStatus := http.StatusFound
 	if resp.StatusCode != expectedStatus {
 		t.Errorf("Failed to get a %v response, got %v", expectedStatus, resp.StatusCode)
 	}
