@@ -183,6 +183,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, wiki string, s storage)
 	}
 
 	if err := p.save(s); err != nil {
+		log.Printf("Error saving wiki page: %v", err) // Add logging here
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return ""
 	}

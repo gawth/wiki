@@ -207,3 +207,62 @@ func TestScrapeHandler(t *testing.T) {
 		t.Errorf("Stub call expect %v but got '%v'", url, stubConverter.calledWith)
 	}
 }
+
+func TestSaveHandler(t *testing.T) {
+	form := url.Values{}
+	form.Add("body", "This is a test body")
+	form.Add("wikitags", "test,example")
+	form.Add("wikipub", "on")
+	form.Add("wikicrypt", "")
+
+	req := httptest.NewRequest("POST", "http://localhost/wiki/save/test", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	s := stubStorage{
+		storeFileFunc: func(name string, content []byte) error {
+			return nil
+		},
+	}
+
+	saveHandler(w, req, "test", &s)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusFound {
+		t.Errorf("Failed to get a 302 response, got %v", resp.StatusCode)
+	}
+}
+
+func TestEditHandler(t *testing.T) {
+	p := wikiPage{basePage: basePage{Title: "Test Title"}}
+	s := stubStorage{
+		page: p,
+		getPageFunc: func(pg *wikiPage) (*wikiPage, error) {
+			return pg, nil
+		},
+	}
+
+	req := httptest.NewRequest("GET", "http://localhost/wiki/edit/test", nil)
+	w := httptest.NewRecorder()
+
+	editHandler(w, req, &p, &s)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+}
+
+func TestSimpleHandler(t *testing.T) {
+	s := stubStorage{}
+	req := httptest.NewRequest("GET", "http://localhost/wiki", nil)
+	w := httptest.NewRecorder()
+
+	handler := simpleHandler("home", stubNavFunc, &s)
+	handler(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Failed to get a 200 response, got %v", resp.StatusCode)
+	}
+}

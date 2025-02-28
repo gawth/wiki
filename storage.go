@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -52,7 +52,7 @@ func (fst *fileStorage) storeFile(name string, content []byte) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(name, content, 0600)
+	err = os.WriteFile(name, content, 0600)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (fst *fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 	}
 	defer file.Close()
 
-	body, err := ioutil.ReadAll(file)
+	body, err := io.ReadAll(file)
 	if err != nil {
 		log.Println(err)
 		return p, err
@@ -128,7 +128,7 @@ func (fst *fileStorage) getPage(p *wikiPage) (*wikiPage, error) {
 
 	p.Modified = info.ModTime().String()
 
-	tags, err := ioutil.ReadFile(getWikiTagsFilename(p.Title))
+	tags, err := os.ReadFile(getWikiTagsFilename(p.Title))
 	if err == nil {
 		p.Tags = string(tags)
 		p.TagArray = strings.Split(p.Tags, ",")
@@ -206,7 +206,7 @@ func (fst *fileStorage) IndexTags(path string) TagIndex {
 
 	err := filepath.WalkDir(path, func(subpath string, info fs.DirEntry, _ error) error {
 		if !info.IsDir() && !strings.HasPrefix(info.Name(), ".") {
-			contents, err := ioutil.ReadFile(subpath)
+			contents, err := os.ReadFile(subpath)
 			checkErr(err)
 
 			wikiName := strings.TrimPrefix(subpath, path)
@@ -251,21 +251,24 @@ func genID(base, name string) string {
 // Folders are included as part of the path
 // Mod time is used to order the files
 func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	checkErr(err)
 
 	var names []wikiNav
-	for _, info := range files {
+	for _, f := range files {
 
-		if info.IsDir() && contains(info.Name(), specialDir) {
+		if f.IsDir() && contains(f.Name(), specialDir) {
 			continue
 		}
-		if strings.HasPrefix(info.Name(), ".") {
+		if strings.HasPrefix(f.Name(), ".") {
 			continue
 		}
+		info, err := f.Info()
+		checkErr(err)
+
 		// Ignore anything that isnt an md file
-		if strings.HasSuffix(info.Name(), ".md") {
-			name := strings.TrimSuffix(info.Name(), ".md")
+		if strings.HasSuffix(f.Name(), ".md") {
+			name := strings.TrimSuffix(f.Name(), ".md")
 			tmp := wikiNav{
 				Name:    name,
 				URL:     base + "/" + name,
@@ -276,8 +279,8 @@ func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 			}
 			names = append(names, tmp)
 		}
-		if strings.HasSuffix(info.Name(), ".txt") {
-			name := strings.TrimSuffix(info.Name(), ".txt")
+		if strings.HasSuffix(f.Name(), ".txt") {
+			name := strings.TrimSuffix(f.Name(), ".txt")
 			tmp := wikiNav{
 				Name:    name,
 				URL:     base + "/" + name,
@@ -288,25 +291,25 @@ func (fst *fileStorage) IndexWikiFiles(base, path string) []wikiNav {
 			}
 			names = append(names, tmp)
 		}
-		if strings.HasSuffix(info.Name(), ".pdf") {
+		if strings.HasSuffix(f.Name(), ".pdf") {
 			tmp := wikiNav{
-				Name:   info.Name(),
-				URL:    base + "/" + info.Name(),
+				Name:   f.Name(),
+				URL:    base + "/" + f.Name(),
 				Mod:    info.ModTime(),
 				ModStr: info.ModTime().Format(TIME_FORMAT),
-				ID:     genID(base, info.Name()),
+				ID:     genID(base, f.Name()),
 			}
 			names = append(names, tmp)
 		}
-		if info.IsDir() {
+		if f.IsDir() {
 			newbase := base + "/" + info.Name()
 			tmp := wikiNav{
-				Name:  info.Name(),
+				Name:  f.Name(),
 				URL:   newbase,
 				IsDir: true,
-				ID:    genID(base, info.Name()),
+				ID:    genID(base, f.Name()),
 			}
-			tmp.SubNav = fst.IndexWikiFiles(newbase, path+"/"+info.Name())
+			tmp.SubNav = fst.IndexWikiFiles(newbase, path+"/"+f.Name())
 			if len(tmp.SubNav) > 0 {
 				// Override the dir's mod time with the first entry
 				tmp.Mod = tmp.SubNav[0].Mod
