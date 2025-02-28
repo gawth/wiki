@@ -339,8 +339,25 @@ func main() {
 	os.MkdirAll(pubDir, 0755)
 
 	httpmux := http.NewServeMux()
+	
+	// Option 1: Using original cached storage
 	cached := newCachedStorage(fileStorage{tagDir}, wikiDir, tagDir)
 	fstore := &cached
+	
+	// Option 2: Using new configurable storage wrapped with caching (currently commented out)
+	/*
+	storageConfig := StorageConfig{
+		WikiDir: wikiDir,
+		TagDir:  tagDir,
+		PubDir:  pubDir,
+		EncKey:  ekey,
+	}
+	configStore := NewConfigurableStorage(storageConfig)
+	// Wrap in cached storage to maintain caching functionality
+	cached := newCachedStorage(configStore.fs, configStore.config.WikiDir, configStore.config.TagDir)
+	fstore := &cached
+	*/
+	
 	htmltomd := md.NewConverter("", true, nil)
 
 	httpmux.Handle("/wiki", loggingHandler(simpleHandler("home", getNav, fstore)))

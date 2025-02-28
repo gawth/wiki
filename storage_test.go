@@ -690,6 +690,135 @@ func TestGetWikiList(t *testing.T) {
 
 // The following are mock functions to help with testing
 
+// TestConfigurableStorage tests the new ConfigurableStorage implementation
+// This demonstrates how to test storage without modifying global variables
+func TestConfigurableStorage(t *testing.T) {
+	// Create a temporary directory for testing
+	tmpDir, err := os.MkdirTemp("", "wiki-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create subdirectories
+	wikiDirPath := filepath.Join(tmpDir, "wiki") + "/"
+	tagDirPath := filepath.Join(tmpDir, "wiki", "tags") + "/"
+	pubDirPath := filepath.Join(tmpDir, "wiki", "pub") + "/"
+
+	os.MkdirAll(wikiDirPath, 0755)
+	os.MkdirAll(tagDirPath, 0755)
+	os.MkdirAll(pubDirPath, 0755)
+
+	// Create a storage config
+	config := StorageConfig{
+		WikiDir: wikiDirPath,
+		TagDir:  tagDirPath,
+		PubDir:  pubDirPath,
+		EncKey:  []byte("12345678901234567890123456789012"), // 32 byte test key
+	}
+
+	// Create a configurable storage instance
+	storage := NewConfigurableStorage(config)
+
+	// Test basic file operations
+	testContent := []byte("Test content")
+	testFilename := filepath.Join(wikiDirPath, "test.md")
+
+	// Store a file
+	err = storage.storeFile(testFilename, testContent)
+	if err != nil {
+		t.Errorf("storeFile failed: %v", err)
+	}
+
+	// Verify file exists
+	content, err := os.ReadFile(testFilename)
+	if err != nil {
+		t.Errorf("Failed to read test file: %v", err)
+	}
+	if !bytes.Equal(content, testContent) {
+		t.Errorf("File content mismatch")
+	}
+
+	// Test get page
+	p := &wikiPage{basePage: basePage{Title: "test"}}
+	result, err := storage.getPage(p)
+	if err != nil {
+		t.Errorf("getPage failed: %v", err)
+	}
+	if string(result.Body) != string(testContent) {
+		t.Errorf("Page content mismatch. Got: %s, Want: %s", result.Body, testContent)
+	}
+
+	// Test encrypted pages
+	encContent := []byte("Encrypted content")
+	encryptedBytes, err := encrypt(encContent, config.EncKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	// Add encryption flag and write to file
+	flaggedContent := append(encryptionFlag, encryptedBytes...)
+	encFilename := filepath.Join(wikiDirPath, "encrypted.md")
+	
+	err = os.WriteFile(encFilename, flaggedContent, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	encPage := &wikiPage{basePage: basePage{Title: "encrypted"}}
+	encResult, err := storage.getPage(encPage)
+	if err != nil {
+		t.Errorf("getPage with encryption failed: %v", err)
+	}
+	
+	if !encResult.Encrypted {
+		t.Error("Page should be marked as encrypted but wasn't")
+	}
+	
+	if string(encResult.Body) != string(encContent) {
+		t.Errorf("Encrypted content mismatch")
+	}
+	
+	// Test tags
+	tagFilename := filepath.Join(tagDirPath, "test")
+	tagsContent := "tag1,tag2,tag3"
+	err = os.WriteFile(tagFilename, []byte(tagsContent), 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	// Refresh the page to see tags
+	p = &wikiPage{basePage: basePage{Title: "test"}}
+	result, err = storage.getPage(p)
+	if err != nil {
+		t.Errorf("getPage with tags failed: %v", err)
+	}
+	
+	if result.Tags != tagsContent {
+		t.Errorf("Tags mismatch. Got: %s, Want: %s", result.Tags, tagsContent)
+	}
+	
+	// Test public flag
+	pubFilename := filepath.Join(pubDirPath, "test")
+	err = os.WriteFile(pubFilename, []byte(""), 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	// Refresh the page to see public flag
+	p = &wikiPage{basePage: basePage{Title: "test"}}
+	result, err = storage.getPage(p)
+	if err != nil {
+		t.Errorf("getPage with public flag failed: %v", err)
+	}
+	
+	if !result.Published {
+		t.Error("Page should be marked as published but wasn't")
+	}
+}
+
+// This code has now been moved to storage.go
+
 // mockFileSystem would implement storage interface for testing
 type mockFileSystem struct {
 	files     map[string][]byte

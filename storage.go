@@ -32,6 +32,110 @@ type storage interface {
 	getWikiList(from string) []string
 }
 
+// StorageConfig holds configuration for file storage
+type StorageConfig struct {
+	WikiDir string
+	TagDir  string
+	PubDir  string
+	EncKey  []byte
+}
+
+// ConfigurableStorage is a storage implementation that does not rely on global variables
+type ConfigurableStorage struct {
+	config StorageConfig
+	fs     fileStorage
+}
+
+// NewConfigurableStorage creates a new configurable storage with the given config
+func NewConfigurableStorage(config StorageConfig) *ConfigurableStorage {
+	return &ConfigurableStorage{
+		config: config,
+		fs:     fileStorage{TagDir: config.TagDir},
+	}
+}
+
+// Implement the storage interface methods for ConfigurableStorage
+func (cs *ConfigurableStorage) storeFile(name string, content []byte) error {
+	return cs.fs.storeFile(name, content)
+}
+
+func (cs *ConfigurableStorage) deleteFile(name string) error {
+	return cs.fs.deleteFile(name)
+}
+
+func (cs *ConfigurableStorage) moveFile(from, to string) error {
+	return cs.fs.moveFile(from, to)
+}
+
+func (cs *ConfigurableStorage) getPublicPages() []string {
+	// Replace global pubDir with config.PubDir
+	originalPubDir := pubDir
+	pubDir = cs.config.PubDir
+	defer func() { pubDir = originalPubDir }()
+	
+	return cs.fs.getPublicPages()
+}
+
+func (cs *ConfigurableStorage) getPage(p *wikiPage) (*wikiPage, error) {
+	// Replace globals with config values
+	originalWikiDir := wikiDir
+	originalTagDir := tagDir
+	originalPubDir := pubDir
+	originalEkey := ekey
+	
+	wikiDir = cs.config.WikiDir
+	tagDir = cs.config.TagDir
+	pubDir = cs.config.PubDir
+	ekey = cs.config.EncKey
+	
+	defer func() {
+		wikiDir = originalWikiDir
+		tagDir = originalTagDir
+		pubDir = originalPubDir
+		ekey = originalEkey
+	}()
+	
+	return cs.fs.getPage(p)
+}
+
+func (cs *ConfigurableStorage) searchPages(root, query string) []string {
+	return cs.fs.searchPages(root, query)
+}
+
+func (cs *ConfigurableStorage) checkForPDF(p *wikiPage) (*wikiPage, error) {
+	// Replace wikiDir with config.WikiDir
+	originalWikiDir := wikiDir
+	wikiDir = cs.config.WikiDir
+	defer func() { wikiDir = originalWikiDir }()
+	
+	return cs.fs.checkForPDF(p)
+}
+
+func (cs *ConfigurableStorage) IndexTags(path string) TagIndex {
+	return cs.fs.IndexTags(path)
+}
+
+func (cs *ConfigurableStorage) GetTagWikis(tag string) Tag {
+	return cs.fs.GetTagWikis(tag)
+}
+
+func (cs *ConfigurableStorage) IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex {
+	return cs.fs.IndexRawFiles(path, fileExtension, existing)
+}
+
+func (cs *ConfigurableStorage) IndexWikiFiles(base, path string) []wikiNav {
+	return cs.fs.IndexWikiFiles(base, path)
+}
+
+func (cs *ConfigurableStorage) getWikiList(from string) []string {
+	// Replace wikiDir with config.WikiDir
+	originalWikiDir := wikiDir
+	wikiDir = cs.config.WikiDir
+	defer func() { wikiDir = originalWikiDir }()
+	
+	return cs.fs.getWikiList(from)
+}
+
 type fileStorage struct {
 	TagDir string
 }
