@@ -39,6 +39,7 @@ func (cs *cachedStorage) IndexRawFiles(path, fileExtension string, existing TagI
 }
 
 func (cs *cachedStorage) clearCache() error {
+	// Original async implementation - rebuilds cache in background
 	go cs.rebuildCache()
 	return nil
 }
