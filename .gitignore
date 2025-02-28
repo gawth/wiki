@@ -11,3 +11,4 @@ config.json
 node_modules
 *.db
 wikidir
+*.out
