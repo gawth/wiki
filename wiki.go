@@ -12,7 +12,7 @@ import (
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
+	bf "github.com/russross/blackfriday/v2"
 )
 
 var (
@@ -116,12 +116,12 @@ func convertMarkdown(page *wikiPage, err error) (*wikiPage, error) {
 
 	page.Body = template.HTML(regexp.MustCompile("\r\n").ReplaceAllString(string(page.Body), "\n"))
 
-	unsafe := blackfriday.Run([]byte(page.Body),
-		blackfriday.WithExtensions(
-			blackfriday.CommonExtensions|
-				blackfriday.HardLineBreak|
-				blackfriday.HeadingIDs|
-				blackfriday.AutoHeadingIDs,
+	unsafe := bf.Run([]byte(page.Body),
+		bf.WithExtensions(
+			bf.CommonExtensions|
+				bf.HardLineBreak|
+				bf.HeadingIDs|
+				bf.AutoHeadingIDs,
 		),
 	)
 
