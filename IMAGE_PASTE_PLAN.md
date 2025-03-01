@@ -1,7 +1,11 @@
-# Image Paste Feature Implementation Plan
+# Wiki Image Features Implementation Plan
 
 ## Overview
-Add clipboard image paste functionality to the wiki editor. When a user pastes an image from clipboard while editing a wiki page, the image will be uploaded to the server, stored in a wiki-specific directory, and a markdown image tag will be inserted at the cursor position.
+
+This plan covers two key image-related features for the wiki editor:
+
+1. **Image Paste** - Add clipboard image paste functionality to upload and insert images at cursor position
+2. **Image Resize** - Enhance the image paste feature with resizing capabilities
 
 ## Implementation Steps
 
@@ -366,8 +370,341 @@ func TestHandleImageUpload(t *testing.T) {
 5. Verify the image uploads and markdown is inserted
 6. Save the wiki page and verify the image displays correctly
 
+## Image Resize Enhancement
+
+### 1. Storage Interface Updates
+- Extend the `storage` interface with a method for storing resized images
+- Add a new method `storeResizedImage` to handle image resizing and saving
+
+```go
+// Add to storage.go - update interface
+type storage interface {
+    // Existing methods...
+    storeImage(wikiTitle string, imageData []byte, extension string) (string, error)
+    storeResizedImage(wikiTitle string, imageData []byte, extension string, width, height int) (string, error)
+}
+
+// Implementation for fileStorage
+func (fst *fileStorage) storeResizedImage(wikiTitle string, imageData []byte, extension string, width, height int) (string, error) {
+    // Create images directory if needed
+    imagesDir := filepath.Join(wikiDir, "images", wikiTitle)
+    if err := os.MkdirAll(imagesDir, 0755); err != nil {
+        return "", err
+    }
+    
+    // Decode image data
+    reader := bytes.NewReader(imageData)
+    var img image.Image
+    var err error
+    
+    switch strings.ToLower(extension) {
+    case ".jpg", ".jpeg":
+        img, err = jpeg.Decode(reader)
+    case ".png":
+        img, err = png.Decode(reader)
+    default:
+        // For other formats, use the generic image decoder
+        img, _, err = image.Decode(reader)
+    }
+    
+    if err != nil {
+        return "", fmt.Errorf("failed to decode image: %v", err)
+    }
+    
+    // Resize the image while maintaining aspect ratio
+    var resized *image.NRGBA
+    if width > 0 && height > 0 {
+        resized = imaging.Resize(img, width, height, imaging.Lanczos)
+    } else if width > 0 {
+        resized = imaging.Resize(img, width, 0, imaging.Lanczos)
+    } else if height > 0 {
+        resized = imaging.Resize(img, 0, height, imaging.Lanczos)
+    } else {
+        return "", fmt.Errorf("at least one dimension (width or height) must be specified")
+    }
+    
+    // Generate unique filename with timestamp and dimensions
+    timestamp := fmt.Sprintf("%d", time.Now().UnixNano())
+    filename := fmt.Sprintf("%s_%dx%d%s", timestamp, resized.Bounds().Dx(), resized.Bounds().Dy(), extension)
+    filepath := filepath.Join(imagesDir, filename)
+    
+    // Create the output file
+    outFile, err := os.Create(filepath)
+    if err != nil {
+        return "", fmt.Errorf("failed to create output file: %v", err)
+    }
+    defer outFile.Close()
+    
+    // Save the resized image
+    switch strings.ToLower(extension) {
+    case ".jpg", ".jpeg":
+        err = jpeg.Encode(outFile, resized, &jpeg.Options{Quality: 90})
+    case ".png":
+        err = png.Encode(outFile, resized)
+    default:
+        // Default to PNG for unknown formats
+        err = png.Encode(outFile, resized)
+    }
+    
+    if err != nil {
+        return "", fmt.Errorf("failed to encode resized image: %v", err)
+    }
+    
+    // Return URL to client
+    imageURL := fmt.Sprintf("/wiki/raw/images/%s/%s", wikiTitle, filename)
+    return imageURL, nil
+}
+```
+
+### 2. Update API Endpoint for Image Resize Support
+- Modify the existing image upload API to accept width and height parameters
+- Process these parameters and call the appropriate storage method
+
+```go
+// Update in api.go
+func handleImageUpload(w http.ResponseWriter, r *http.Request, s storage) bool {
+    // Existing code...
+    
+    var imageURL string
+    
+    // Check if resize parameters were provided
+    widthStr := r.FormValue("width")
+    heightStr := r.FormValue("height")
+    
+    if widthStr != "" || heightStr != "" {
+        // Parse resize dimensions
+        width, height := 0, 0
+        if widthStr != "" {
+            if w, err := strconv.Atoi(widthStr); err == nil {
+                width = w
+            }
+        }
+        if heightStr != "" {
+            if h, err := strconv.Atoi(heightStr); err == nil {
+                height = h
+            }
+        }
+        
+        // Store resized image
+        imageURL, err = s.storeResizedImage(wikiTitle, imageData, fileExt, width, height)
+    } else {
+        // Store original image
+        imageURL, err = s.storeImage(wikiTitle, imageData, fileExt)
+    }
+    
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return true
+    }
+    
+    // Return URL to client
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"url": imageURL})
+    
+    return true
+}
+```
+
+### 3. Enhanced JavaScript for Image Resizing UI
+- Update `static/js/copypaste.js` to add a resize dialog
+- Provide width and height inputs with original dimension display
+- Add preview functionality for the resized image
+
+```javascript
+// Update in static/js/copypaste.js
+function uploadImage(blob) {
+    // Get wiki title from URL
+    const pathParts = window.location.pathname.split('/');
+    const editIndex = pathParts.indexOf('edit');
+    const wikiTitle = editIndex >= 0 && editIndex < pathParts.length - 1 ? pathParts[editIndex + 1] : '';
+    
+    if (!wikiTitle) {
+        console.error('Could not determine wiki title from URL');
+        return;
+    }
+    
+    // Create image resize dialog
+    const dialog = document.createElement('div');
+    dialog.style.position = 'fixed';
+    dialog.style.top = '50%';
+    dialog.style.left = '50%';
+    dialog.style.transform = 'translate(-50%, -50%)';
+    dialog.style.backgroundColor = '#fff';
+    dialog.style.padding = '20px';
+    dialog.style.borderRadius = '8px';
+    dialog.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    dialog.style.zIndex = '1000';
+    dialog.style.width = '400px';
+    dialog.style.maxWidth = '95vw';
+    dialog.innerHTML = `
+        <h3 style="margin-top:0">Image Options</h3>
+        <div id="image-preview" style="max-width: 100%; height: 150px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; border: 1px dashed #ccc;">
+            <img style="max-width: 100%; max-height: 100%;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px;">Width (px):</label>
+            <input type="number" id="image-width" placeholder="Original width" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px;">Height (px):</label>
+            <input type="number" id="image-height" placeholder="Original height" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;" />
+        </div>
+        <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+            <button id="cancel-upload" style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer;">Cancel</button>
+            <button id="upload-original" style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer;">Upload Original</button>
+            <button id="upload-resized" style="padding: 8px 16px; border-radius: 4px; border: none; background-color: #4a90e2; color: white; cursor: pointer;">Upload with Resize</button>
+        </div>
+    `;
+    
+    // Add overlay
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    overlay.style.zIndex = '999';
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(dialog);
+    
+    // Load image preview
+    const imageUrl = URL.createObjectURL(blob);
+    const previewImg = dialog.querySelector('#image-preview img');
+    previewImg.src = imageUrl;
+    
+    // Set original dimensions
+    previewImg.onload = function() {
+        const widthInput = document.getElementById('image-width');
+        const heightInput = document.getElementById('image-height');
+        widthInput.placeholder = `Original width (${previewImg.naturalWidth}px)`;
+        heightInput.placeholder = `Original height (${previewImg.naturalHeight}px)`;
+    };
+    
+    // Handle cancel
+    document.getElementById('cancel-upload').addEventListener('click', function() {
+        document.body.removeChild(dialog);
+        document.body.removeChild(overlay);
+        URL.revokeObjectURL(imageUrl);
+    });
+    
+    // Handle upload original
+    document.getElementById('upload-original').addEventListener('click', function() {
+        performUpload(blob, wikiTitle);
+        document.body.removeChild(dialog);
+        document.body.removeChild(overlay);
+        URL.revokeObjectURL(imageUrl);
+    });
+    
+    // Handle upload resized
+    document.getElementById('upload-resized').addEventListener('click', function() {
+        const width = document.getElementById('image-width').value;
+        const height = document.getElementById('image-height').value;
+        
+        if (!width && !height) {
+            alert('Please specify at least one dimension (width or height)');
+            return;
+        }
+        
+        performUpload(blob, wikiTitle, width, height);
+        document.body.removeChild(dialog);
+        document.body.removeChild(overlay);
+        URL.revokeObjectURL(imageUrl);
+    });
+}
+
+function performUpload(blob, wikiTitle, width, height) {
+    // Show upload status
+    const statusEl = document.createElement('div');
+    statusEl.textContent = 'Uploading image...';
+    statusEl.style.position = 'fixed';
+    statusEl.style.top = '10px';
+    statusEl.style.right = '10px';
+    statusEl.style.padding = '8px 16px';
+    statusEl.style.backgroundColor = '#f0f0f0';
+    statusEl.style.border = '1px solid #ccc';
+    statusEl.style.borderRadius = '4px';
+    document.body.appendChild(statusEl);
+    
+    // Create FormData and append the image
+    const formData = new FormData();
+    formData.append('image', blob, 'clipboard-image.png');
+    
+    // Add resize parameters if provided
+    if (width) formData.append('width', width);
+    if (height) formData.append('height', height);
+    
+    // Send to server
+    fetch('/api/image/' + wikiTitle, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.url) {
+            // Insert markdown for image at cursor position
+            insertAtCursor(editor, `![Image](${data.url})`);
+        }
+        document.body.removeChild(statusEl);
+    })
+    .catch(error => {
+        console.error('Error uploading image:', error);
+        document.body.removeChild(statusEl);
+    });
+}
+```
+
+### 4. Tests for Image Resizing
+
+Add tests for the resizing functionality in `storage_image_test.go`:
+
+```go
+func TestFileStorage_StoreResizedImage(t *testing.T) {
+    // Create a temp directory for testing
+    tempDir := t.TempDir()
+    origWikiDir := wikiDir
+    wikiDir = tempDir + "/"
+    defer func() { wikiDir = origWikiDir }()
+    
+    // Create a test image
+    img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+    // Fill with a solid color
+    for y := 0; y < 100; y++ {
+        for x := 0; x < 100; x++ {
+            offset := img.PixOffset(x, y)
+            img.Pix[offset+0] = 255  // R
+            img.Pix[offset+1] = 0    // G
+            img.Pix[offset+2] = 0    // B
+            img.Pix[offset+3] = 255  // A
+        }
+    }
+    
+    // Encode the image
+    var buf bytes.Buffer
+    if err := png.Encode(&buf, img); err != nil {
+        t.Fatalf("Failed to encode test image: %v", err)
+    }
+    imageData := buf.Bytes()
+    
+    // Create storage
+    fs := fileStorage{}
+    
+    // Test resize to 50x50
+    imageURL, err := fs.storeResizedImage("testpage", imageData, ".png", 50, 50)
+    if err != nil {
+        t.Fatalf("Failed to store resized image: %v", err)
+    }
+    
+    // Verify the image is created and has correct dimensions
+    // (rest of the test implementation)
+}
+```
+
 ## Future Enhancements
 - Add progress indicator for large image uploads
-- Allow for image resizing before upload
-- Add drag-and-drop image support
+- Add image cropping functionality
+- Add drag-and-drop image support with resize options
 - Add direct file selection for uploads
+- Implement image rotation options
+- Add thumbnail generation with links to full-size images

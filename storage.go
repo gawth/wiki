@@ -5,6 +5,9 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"io/fs"
 	"log"
@@ -14,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/disintegration/imaging"
 )
 
 const TIME_FORMAT = "2006-01-02 15:04:05"
@@ -32,6 +37,7 @@ type storage interface {
 	IndexWikiFiles(base, path string) []wikiNav
 	getWikiList(from string) []string
 	storeImage(wikiTitle string, imageData []byte, extension string) (string, error)
+	storeResizedImage(wikiTitle string, imageData []byte, extension string, width, height int) (string, error)
 }
 
 // StorageConfig holds configuration for file storage
@@ -145,6 +151,15 @@ func (cs *ConfigurableStorage) storeImage(wikiTitle string, imageData []byte, ex
 	defer func() { wikiDir = originalWikiDir }()
 	
 	return cs.fs.storeImage(wikiTitle, imageData, extension)
+}
+
+func (cs *ConfigurableStorage) storeResizedImage(wikiTitle string, imageData []byte, extension string, width, height int) (string, error) {
+	// Replace wikiDir with config.WikiDir
+	originalWikiDir := wikiDir
+	wikiDir = cs.config.WikiDir
+	defer func() { wikiDir = originalWikiDir }()
+	
+	return cs.fs.storeResizedImage(wikiTitle, imageData, extension, width, height)
 }
 
 type fileStorage struct {
@@ -476,6 +491,104 @@ func (fst *fileStorage) storeImage(wikiTitle string, imageData []byte, extension
 	// Save file
 	if err := os.WriteFile(filepath, imageData, 0644); err != nil {
 		return "", err
+	}
+	
+	// Return URL to client
+	imageURL := fmt.Sprintf("/wiki/raw/images/%s/%s", wikiTitle, filename)
+	return imageURL, nil
+}
+
+// storeResizedImage saves a resized version of the image to the wiki's images directory
+func (fst *fileStorage) storeResizedImage(wikiTitle string, imageData []byte, extension string, width, height int) (string, error) {
+	// Create images directory if needed
+	imagesDir := filepath.Join(wikiDir, "images", wikiTitle)
+	if err := os.MkdirAll(imagesDir, 0755); err != nil {
+		return "", err
+	}
+	
+	// Decode image data
+	reader := bytes.NewReader(imageData)
+	var img image.Image
+	var err error
+	
+	switch strings.ToLower(extension) {
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(reader)
+	case ".png":
+		img, err = png.Decode(reader)
+	default:
+		// For other formats, use the generic image decoder
+		img, _, err = image.Decode(reader)
+	}
+	
+	if err != nil {
+		return "", fmt.Errorf("failed to decode image: %v", err)
+	}
+	
+	// Resize the image while maintaining aspect ratio
+	var resized *image.NRGBA
+	
+	// Ensure we have at least one positive dimension
+	if width <= 0 && height <= 0 {
+		return "", fmt.Errorf("at least one dimension (width or height) must be specified")
+	}
+	
+	// Get original image dimensions
+	originalBounds := img.Bounds()
+	originalWidth := originalBounds.Dx()
+	originalHeight := originalBounds.Dy()
+	
+	log.Printf("Original image dimensions: %dx%d", originalWidth, originalHeight)
+	
+	// Prevent resizing to zero dimensions
+	if width <= 0 {
+		// Calculate width based on height while maintaining aspect ratio
+		width = int(float64(originalWidth) * float64(height) / float64(originalHeight))
+		if width < 1 {
+			width = 1
+		}
+	}
+	
+	if height <= 0 {
+		// Calculate height based on width while maintaining aspect ratio
+		height = int(float64(originalHeight) * float64(width) / float64(originalWidth))
+		if height < 1 {
+			height = 1
+		}
+	}
+	
+	log.Printf("Resizing to dimensions: %dx%d", width, height)
+	
+	// Perform the resize operation with high-quality resampling filter
+	resized = imaging.Resize(img, width, height, imaging.Lanczos)
+	
+	// Generate unique filename with timestamp and dimensions
+	timestamp := fmt.Sprintf("%d", time.Now().UnixNano())
+	filename := fmt.Sprintf("%s_%dx%d%s", timestamp, resized.Bounds().Dx(), resized.Bounds().Dy(), extension)
+	filepath := filepath.Join(imagesDir, filename)
+	
+	// Create the output file
+	outFile, err := os.Create(filepath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create output file: %v", err)
+	}
+	defer outFile.Close()
+	
+	// Save the resized image with high quality
+	switch strings.ToLower(extension) {
+	case ".jpg", ".jpeg":
+		// Use high quality setting (95) for JPEG to prevent visible compression artifacts
+		err = jpeg.Encode(outFile, resized, &jpeg.Options{Quality: 95})
+	case ".png":
+		// PNG is lossless so no quality setting needed
+		err = png.Encode(outFile, resized)
+	default:
+		// Default to PNG for unknown formats (lossless)
+		err = png.Encode(outFile, resized)
+	}
+	
+	if err != nil {
+		return "", fmt.Errorf("failed to encode resized image: %v", err)
 	}
 	
 	// Return URL to client

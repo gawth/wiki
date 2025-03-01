@@ -1,5 +1,19 @@
 # Wiki Project Guidelines
 
+## Git Workflow
+- **NEVER make changes directly on master**
+- Always create a feature branch for new work: `git checkout -b feature-name`
+- Branch naming convention: `feature-[descriptive-name]` or `fix-[issue-name]`
+- Keep commits focused and atomic with descriptive messages
+- Before starting work: 
+  1. Check current branch: `git branch`
+  2. If on master, create new branch before proceeding
+  3. Pull latest changes: `git pull origin master`
+- When feature is complete:
+  1. Run tests: `go test ./...`
+  2. Push branch: `git push -u origin feature-name`
+  3. Create PR or merge to master as appropriate
+
 ## Build & Test Commands
 - Build: `go build`
 - Run: `go run wiki.go`

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -139,8 +140,52 @@ func handleImageUpload(w http.ResponseWriter, r *http.Request, s storage) bool {
 		fileExt = ".png"
 	}
 	
-	// Store image using storage interface
-	imageURL, err := s.storeImage(wikiTitle, imageData, fileExt)
+	var imageURL string
+	
+	// Check if resize parameters were provided
+	widthStr := r.FormValue("width")
+	heightStr := r.FormValue("height")
+	
+	if widthStr != "" || heightStr != "" {
+		// Parse resize dimensions
+		width, height := 0, 0
+		var parseErr error
+		
+		if widthStr != "" {
+			width, parseErr = parseInt(widthStr)
+			if parseErr != nil {
+				log.Printf("Error parsing width parameter: %v", parseErr)
+				// Default to a sensible width if parse fails
+				width = 800
+			}
+		}
+		
+		if heightStr != "" {
+			height, parseErr = parseInt(heightStr)
+			if parseErr != nil {
+				log.Printf("Error parsing height parameter: %v", parseErr)
+				// Default to a sensible height if parse fails
+				height = 600
+			}
+		}
+		
+		// Ensure at least one dimension is specified
+		if width <= 0 && height <= 0 {
+			width = 800 // Default width if both dimensions are invalid
+		}
+		
+		log.Printf("Resizing image to %dx%d", width, height)
+		
+		// Store resized image
+		imageURL, err = s.storeResizedImage(wikiTitle, imageData, fileExt, width, height)
+		if err != nil {
+			log.Printf("Error resizing image: %v", err)
+		}
+	} else {
+		// Store original image
+		imageURL, err = s.storeImage(wikiTitle, imageData, fileExt)
+	}
+	
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return true
@@ -151,6 +196,11 @@ func handleImageUpload(w http.ResponseWriter, r *http.Request, s storage) bool {
 	json.NewEncoder(w).Encode(map[string]string{"url": imageURL})
 	
 	return true
+}
+
+// Helper function to parse integer from string
+func parseInt(s string) (int, error) {
+	return strconv.Atoi(s)
 }
 
 func innerAPIHandler(w http.ResponseWriter, r *http.Request, s storage) {

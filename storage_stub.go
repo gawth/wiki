@@ -1,13 +1,14 @@
 package main
 
 type stubStorage struct {
-	page            wikiPage
-	expectederr     error
-	GetTagWikisFunc func(string) Tag
-	getPageFunc     func(*wikiPage) (*wikiPage, error)
-	storeFileFunc   func(string, []byte) error
-	storeImageFunc  func(string, []byte, string) (string, error)
-	loggerFunc      func(string)
+	page                wikiPage
+	expectederr         error
+	GetTagWikisFunc     func(string) Tag
+	getPageFunc         func(*wikiPage) (*wikiPage, error)
+	storeFileFunc       func(string, []byte) error
+	storeImageFunc      func(string, []byte, string) (string, error)
+	storeResizedImageFunc func(string, []byte, string, int, int) (string, error)
+	loggerFunc          func(string)
 }
 
 func (ss *stubStorage) logit(method string) {
@@ -66,4 +67,12 @@ func (ss *stubStorage) storeImage(wikiTitle string, imageData []byte, extension 
 	}
 	ss.logit("storeImage")
 	return "/wiki/raw/images/" + wikiTitle + "/test.png", nil
+}
+
+func (ss *stubStorage) storeResizedImage(wikiTitle string, imageData []byte, extension string, width, height int) (string, error) {
+	if ss.storeResizedImageFunc != nil {
+		return ss.storeResizedImageFunc(wikiTitle, imageData, extension, width, height)
+	}
+	ss.logit("storeResizedImage")
+	return "/wiki/raw/images/" + wikiTitle + "/test_resized.png", nil
 }
