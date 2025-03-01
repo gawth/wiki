@@ -372,6 +372,7 @@ func main() {
 	httpmux.Handle("/wiki/raw/", http.StripPrefix("/wiki/raw/", http.FileServer(http.Dir(wikiDir))))
 	httpmux.Handle("/pub/", loggingHandler(makePubHandler(pubHandler, getNav, fstore)))
 	httpmux.Handle("/pub", loggingHandler(simpleHandler("pubhome", getPubNav, fstore)))
+	httpmux.Handle("/api/", loggingHandler(apiHandler(innerAPIHandler, fstore)))
 	httpmux.Handle("/api", loggingHandler(apiHandler(innerAPIHandler, fstore)))
 	httpmux.Handle("/", http.FileServer(http.Dir("wwwroot")))
 	httpmux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

@@ -6,6 +6,7 @@ type stubStorage struct {
 	GetTagWikisFunc func(string) Tag
 	getPageFunc     func(*wikiPage) (*wikiPage, error)
 	storeFileFunc   func(string, []byte) error
+	storeImageFunc  func(string, []byte, string) (string, error)
 	loggerFunc      func(string)
 }
 
@@ -57,4 +58,12 @@ func (ss *stubStorage) GetTagWikis(tag string) Tag {
 }
 func (ss *stubStorage) IndexWikiFiles(base, path string) []wikiNav {
 	return nil
+}
+
+func (ss *stubStorage) storeImage(wikiTitle string, imageData []byte, extension string) (string, error) {
+	if ss.storeImageFunc != nil {
+		return ss.storeImageFunc(wikiTitle, imageData, extension)
+	}
+	ss.logit("storeImage")
+	return "/wiki/raw/images/" + wikiTitle + "/test.png", nil
 }

@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 const TIME_FORMAT = "2006-01-02 15:04:05"
@@ -30,6 +31,7 @@ type storage interface {
 	IndexRawFiles(path, fileExtension string, existing TagIndex) TagIndex
 	IndexWikiFiles(base, path string) []wikiNav
 	getWikiList(from string) []string
+	storeImage(wikiTitle string, imageData []byte, extension string) (string, error)
 }
 
 // StorageConfig holds configuration for file storage
@@ -134,6 +136,15 @@ func (cs *ConfigurableStorage) getWikiList(from string) []string {
 	defer func() { wikiDir = originalWikiDir }()
 	
 	return cs.fs.getWikiList(from)
+}
+
+func (cs *ConfigurableStorage) storeImage(wikiTitle string, imageData []byte, extension string) (string, error) {
+	// Replace wikiDir with config.WikiDir
+	originalWikiDir := wikiDir
+	wikiDir = cs.config.WikiDir
+	defer func() { wikiDir = originalWikiDir }()
+	
+	return cs.fs.storeImage(wikiTitle, imageData, extension)
 }
 
 type fileStorage struct {
@@ -447,4 +458,27 @@ func (fst *fileStorage) getWikiList(from string) []string {
 	checkErr(err)
 
 	return results
+}
+
+// storeImage saves an image to the wiki's images directory
+func (fst *fileStorage) storeImage(wikiTitle string, imageData []byte, extension string) (string, error) {
+	// Create images directory if needed
+	imagesDir := filepath.Join(wikiDir, "images", wikiTitle)
+	if err := os.MkdirAll(imagesDir, 0755); err != nil {
+		return "", err
+	}
+	
+	// Generate unique filename with timestamp
+	timestamp := fmt.Sprintf("%d", time.Now().UnixNano())
+	filename := timestamp + extension
+	filepath := filepath.Join(imagesDir, filename)
+	
+	// Save file
+	if err := os.WriteFile(filepath, imageData, 0644); err != nil {
+		return "", err
+	}
+	
+	// Return URL to client
+	imageURL := fmt.Sprintf("/wiki/raw/images/%s/%s", wikiTitle, filename)
+	return imageURL, nil
 }

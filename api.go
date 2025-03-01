@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
 func apiHandler(fn func(http.ResponseWriter, *http.Request, storage), s storage) http.HandlerFunc {
@@ -54,7 +56,7 @@ func handlePostWiki(w http.ResponseWriter, r *http.Request, s storage) bool {
 		return false
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return false
@@ -100,8 +102,66 @@ func handleGetList(w http.ResponseWriter, r *http.Request, s storage) bool {
 	return true
 }
 
+func handleImageUpload(w http.ResponseWriter, r *http.Request, s storage) bool {
+	// Extract wiki title from URL path
+	parts := strings.Split(r.URL.Path, "/")
+	
+	if len(parts) < 4 || parts[2] != "image" {
+		return false
+	}
+	wikiTitle := parts[3]
+	
+	// Parse multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10MB max
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return true
+	}
+	
+	// Get image file
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return true
+	}
+	defer file.Close()
+	
+	// Read file data
+	imageData, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return true
+	}
+	
+	// Get file extension or default to .png
+	fileExt := filepath.Ext(handler.Filename)
+	if fileExt == "" {
+		fileExt = ".png"
+	}
+	
+	// Store image using storage interface
+	imageURL, err := s.storeImage(wikiTitle, imageData, fileExt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return true
+	}
+	
+	// Return URL to client
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"url": imageURL})
+	
+	return true
+}
+
 func innerAPIHandler(w http.ResponseWriter, r *http.Request, s storage) {
 	w.Header().Set("Content-Type", "application/json")
+
+	// Add this before other handlers
+	if strings.HasPrefix(r.URL.Path, "/api/image/") {
+		if handleImageUpload(w, r, s) {
+			return
+		}
+	}
 
 	if ok := handleTag(w, r, s); ok {
 		return
